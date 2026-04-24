@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>4A Sports Academy</title>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f7f5;color:#1a1a1a;-webkit-tap-highlight-color:transparent;}
+
+
+/* ── PERFORMANCE ── */
+.perf-section{margin:0 1rem 1rem;}
+.perf-title{font-size:11px;font-weight:700;color:#888;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px;}
+.skill-row{display:flex;align-items:center;margin-bottom:10px;}
+.skill-name{font-size:13px;color:#1a1a1a;width:90px;flex-shrink:0;}
+.skill-stars{display:flex;gap:4px;flex:1;}
+.star{font-size:20px;cursor:pointer;line-height:1;transition:transform 0.1s;}
+.star:active{transform:scale(1.3);}
+.skill-val{font-size:12px;font-weight:700;color:#888;width:24px;text-align:right;}
+.prog-bar-wrap{margin-bottom:6px;}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
+.prog-label span:first-child{color:#888;}
+.prog-label span:last-child{font-weight:600;color:#1a1a1a;}
+.prog-track{height:6px;background:#eee;border-radius:3px;overflow:hidden;}
+.prog-fill{height:6px;border-radius:3px;transition:width 0.4s;}
+.month-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:12px;}
+.month-tabs::-webkit-scrollbar{display:none;}
+.month-tab{flex-shrink:0;padding:5px 12px;font-size:12px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#888;cursor:pointer;white-space:nowrap;}
+.month-tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.quarter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.quarter-card{background:#fff;border:1px solid #eee;border-radius:10px;padding:10px 8px;text-align:center;}
+.quarter-label{font-size:10px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;}
+.quarter-score{font-size:18px;font-weight:700;color:#1a1a1a;}
+.quarter-sub{font-size:10px;color:#888;margin-top:1px;}
+.trend-up{color:#2d7d46;}
+.trend-down{color:#c0392b;}
+.trend-same{color:#888;}
+
+/* REPORT CARD */
+#reportCardView{position:fixed;inset:0;background:#f7f7f5;z-index:200;display:none;overflow-y:auto;padding-bottom:2rem;}
+.rc-header{background:#1a1a1a;padding:1.5rem 1rem;text-align:center;color:#fff;}
+.rc-logo{font-size:32px;margin-bottom:6px;}
+.rc-academy{font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.6);}
+.rc-title{font-size:20px;font-weight:700;margin-top:4px;}
+.rc-period{font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;}
+.rc-student-block{background:#fff;margin:1rem;border-radius:12px;padding:1rem;display:flex;align-items:center;gap:12px;}
+.rc-avatar{width:52px;height:52px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;}
+.rc-stud-name{font-size:17px;font-weight:700;}
+.rc-stud-sub{font-size:12px;color:#888;margin-top:2px;}
+.rc-skill-block{background:#fff;margin:0 1rem 1rem;border-radius:12px;padding:1rem;}
+.rc-skill-title{font-size:11px;font-weight:700;color:#888;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:12px;}
+.rc-skill-item{margin-bottom:12px;}
+.rc-skill-label{display:flex;justify-content:space-between;margin-bottom:4px;}
+.rc-skill-label span:first-child{font-size:13px;color:#1a1a1a;font-weight:500;}
+.rc-skill-label span:last-child{font-size:12px;font-weight:700;color:#1a1a1a;}
+.rc-track{height:8px;background:#eee;border-radius:4px;overflow:hidden;}
+.rc-fill{height:8px;border-radius:4px;}
+.rc-overall{background:#1a1a1a;margin:0 1rem 1rem;border-radius:12px;padding:1rem;text-align:center;color:#fff;}
+.rc-overall-num{font-size:48px;font-weight:700;}
+.rc-overall-label{font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;}
+.rc-grade{font-size:18px;font-weight:700;margin-top:8px;}
+.rc-note{background:#fff;margin:0 1rem 1rem;border-radius:12px;padding:1rem;}
+.rc-note-label{font-size:11px;font-weight:700;color:#888;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px;}
+.rc-note-text{font-size:14px;color:#1a1a1a;line-height:1.6;}
+.rc-close-btn{margin:0 1rem;width:calc(100% - 2rem);padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
+.login-logo{width:64px;height:64px;background:#1a1a1a;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:1.25rem;}
+.login-title{font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
+.login-sub{font-size:14px;color:#888;margin-bottom:2rem;}
+.login-field{width:100%;max-width:320px;padding:13px 16px;border:1px solid #ddd;border-radius:12px;font-size:16px;font-family:inherit;outline:none;margin-bottom:12px;}
+.login-field:focus{border-color:#1a1a1a;}
+.login-btn{width:100%;max-width:320px;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;}
+.login-error{font-size:13px;color:#c0392b;margin-top:8px;min-height:18px;}
+
+/* ── APP SHELL ── */
+#appShell{display:none;padding-bottom:70px;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;z-index:50;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;cursor:pointer;color:#bbb;font-size:10px;font-weight:500;gap:2px;border:none;background:none;transition:color 0.15s;}
+.nav-item.active{color:#1a1a1a;}
+.nav-icon{font-size:22px;line-height:1;}
+
+/* ── HEADER ── */
+.header{background:#fff;padding:1rem 1rem 0.75rem;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;}
+.header-top{display:flex;justify-content:space-between;align-items:center;}
+.academy-name{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#888;}
+.page-title{font-size:22px;font-weight:700;color:#1a1a1a;margin-top:2px;}
+.logout-btn{font-size:12px;color:#888;border:1px solid #eee;padding:5px 10px;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;}
+
+/* ── DASHBOARD ── */
+.dash-hero{background:#1a1a1a;margin:1rem;border-radius:16px;padding:1.25rem;color:#fff;}
+.dash-greeting{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:2px;}
+.dash-name{font-size:20px;font-weight:700;}
+.dash-quote{font-size:12px;color:rgba(255,255,255,0.5);margin-top:10px;line-height:1.5;font-style:italic;}
+.dash-date{font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;}
+.dash-section{padding:0 1rem 0;}
+.dash-section-title{font-size:11px;font-weight:700;color:#888;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px;margin-top:1rem;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stat-card{background:#fff;border-radius:12px;padding:12px 14px;border:1px solid #eee;}
+.stat-num{font-size:24px;font-weight:700;}
+.stat-num.green{color:#2d7d46;}
+.stat-num.red{color:#c0392b;}
+.stat-num.amber{color:#b8860b;}
+.stat-num.dark{color:#1a1a1a;}
+.stat-num.blue{color:#1a6db5;}
+.stat-label{font-size:11px;color:#888;margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+.batch-card{background:#fff;border:1px solid #eee;border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.bc-left .bc-name{font-size:14px;font-weight:600;}
+.bc-left .bc-sub{font-size:12px;color:#888;margin-top:2px;}
+.bc-bar{height:3px;background:#eee;border-radius:2px;margin-top:8px;width:120px;}
+.bc-fill{height:3px;background:#2d7d46;border-radius:2px;}
+.bc-right{text-align:right;}
+.bc-count{font-size:20px;font-weight:700;color:#2d7d46;}
+.bc-total{font-size:11px;color:#888;}
+
+/* ── DATE BAR ── */
+.date-bar{background:#fff;border-bottom:1px solid #eee;padding:0.6rem 1rem;display:flex;align-items:center;gap:8px;}
+.date-arrow{width:34px;height:34px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#555;}
+.date-center{flex:1;text-align:center;}
+.date-display{font-size:15px;font-weight:600;}
+.date-sub{font-size:11px;color:#888;margin-top:1px;}
+.date-input-wrap{position:relative;}
+.date-input-wrap input[type=date]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+
+/* ── TABS & CHIPS ── */
+.tab-row{display:flex;gap:8px;padding:0.75rem 1rem 0;background:#fff;}
+.tab{flex:1;padding:9px 4px;font-size:14px;font-weight:500;border:1px solid #ddd;border-radius:10px;background:#fff;color:#888;cursor:pointer;text-align:center;}
+.tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.batch-row{display:flex;gap:8px;padding:0.75rem 1rem;background:#fff;border-bottom:1px solid #eee;overflow-x:auto;scrollbar-width:none;}
+.batch-row::-webkit-scrollbar{display:none;}
+.batch-chip{flex-shrink:0;padding:6px 16px;font-size:13px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#888;cursor:pointer;}
+.batch-chip.active{background:#f0f0ee;color:#1a1a1a;border-color:#bbb;font-weight:600;}
+
+/* ── ATTENDANCE ── */
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0.75rem 1rem;}
+.section{padding:0 1rem 1rem;}
+.section-label{font-size:11px;font-weight:700;color:#888;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;padding-top:0.5rem;}
+.student-card{background:#fff;border:1px solid #eee;border-radius:12px;margin-bottom:8px;overflow:hidden;}
+.student-row{display:flex;align-items:center;padding:12px 14px;cursor:pointer;}
+.avatar{width:38px;height:38px;border-radius:50%;background:#f0f0ee;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#555;flex-shrink:0;}
+.student-info{flex:1;margin-left:10px;min-width:0;}
+.student-name{font-size:15px;font-weight:500;}
+.student-sub{font-size:12px;color:#888;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.toggle-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;margin-left:8px;}
+.toggle{width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;flex-shrink:0;}
+.toggle.present{background:#2d7d46;}
+.toggle.absent{background:#ccc;}
+.toggle-dot{position:absolute;top:4px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:left 0.15s;}
+.toggle.present .toggle-dot{left:24px;}
+.toggle.absent .toggle-dot{left:4px;}
+.toggle-status{font-size:10px;font-weight:600;}
+.toggle-status.present{color:#2d7d46;}
+.toggle-status.absent{color:#c0392b;}
+.expand-panel{padding:0 14px 14px;border-top:1px solid #f0f0f0;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f5f5;}
+.detail-row:last-of-type{border-bottom:none;}
+.detail-key{font-size:12px;color:#888;}
+.detail-val{font-size:13px;font-weight:500;text-align:right;max-width:60%;}
+.comment-label{font-size:12px;color:#888;margin-top:10px;margin-bottom:5px;}
+.comment-input{width:100%;font-size:13px;padding:8px 10px;border:1px solid #e0e0e0;border-radius:8px;background:#fafafa;color:#1a1a1a;outline:none;font-family:inherit;}
+.add-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 2rem);margin:0 1rem 1rem;padding:13px;border:1.5px dashed #ccc;border-radius:12px;background:#fff;color:#555;font-size:14px;font-weight:500;cursor:pointer;}
+.save-bar{padding:0.75rem 1rem;background:#fff;border-top:1px solid #eee;display:flex;align-items:center;gap:10px;margin-top:0.5rem;}
+.saved-badge{font-size:12px;color:#2d7d46;font-weight:600;flex:1;}
+.save-btn{padding:13px 28px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+/* ── PROFILES ── */
+.search-bar{padding:0.75rem 1rem;background:#fff;border-bottom:1px solid #eee;}
+.search-input{width:100%;padding:10px 14px;border:1px solid #eee;border-radius:10px;font-size:14px;background:#f7f7f5;color:#1a1a1a;outline:none;font-family:inherit;}
+.filter-row{display:flex;gap:6px;padding:0.6rem 1rem;background:#fff;border-bottom:1px solid #eee;overflow-x:auto;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-chip{flex-shrink:0;padding:5px 12px;font-size:12px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#888;cursor:pointer;}
+.filter-chip.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.profile-card{background:#fff;border:1px solid #eee;border-radius:12px;margin-bottom:8px;overflow:hidden;cursor:pointer;}
+.profile-row{display:flex;align-items:center;padding:12px 14px;}
+.profile-info{flex:1;margin-left:10px;min-width:0;}
+.profile-name{font-size:15px;font-weight:600;}
+.profile-sub{font-size:12px;color:#888;margin-top:2px;}
+.fee-pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.fee-pill.paid{background:#e8f5e9;color:#2d7d46;}
+.fee-pill.unpaid{background:#fdecea;color:#c0392b;}
+.fee-pill.partial{background:#fff8e1;color:#b8860b;}
+
+/* ── PROFILE DETAIL (full screen) ── */
+#profileDetail{position:fixed;inset:0;background:#f7f7f5;z-index:100;display:none;overflow-y:auto;padding-bottom:2rem;}
+.detail-header{background:#fff;padding:1rem;border-bottom:1px solid #eee;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5;}
+.back-btn{width:36px;height:36px;border:1px solid #eee;border-radius:8px;background:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.detail-hero{background:#1a1a1a;margin:1rem;border-radius:16px;padding:1.25rem;color:#fff;display:flex;align-items:center;gap:14px;}
+.detail-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;}
+.detail-stud-name{font-size:18px;font-weight:700;}
+.detail-stud-sub{font-size:13px;color:rgba(255,255,255,0.6);margin-top:3px;}
+.info-card{background:#fff;border:1px solid #eee;border-radius:12px;margin:0 1rem 1rem;overflow:hidden;}
+.info-card-title{font-size:11px;font-weight:700;color:#888;letter-spacing:0.07em;text-transform:uppercase;padding:12px 14px 8px;border-bottom:1px solid #f5f5f5;}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #f8f8f8;}
+.info-row:last-child{border-bottom:none;}
+.info-key{font-size:13px;color:#888;}
+.info-val{font-size:13px;font-weight:500;text-align:right;}
+.fee-action-row{display:flex;gap:8px;padding:1rem;}
+.fee-action-btn{flex:1;padding:11px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;text-align:center;}
+.fee-action-btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.fee-history-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #f8f8f8;}
+.fee-history-row:last-child{border-bottom:none;}
+.fhr-left .fhr-amount{font-size:14px;font-weight:600;color:#2d7d46;}
+.fhr-left .fhr-date{font-size:12px;color:#888;margin-top:1px;}
+.fhr-right{text-align:right;}
+.fhr-mode{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#f0f0ee;color:#555;}
+.fhr-type{font-size:11px;color:#888;margin-top:2px;}
+
+/* ── INQUIRIES ── */
+.inq-card{background:#fff;border:1px solid #eee;border-radius:12px;margin-bottom:8px;padding:14px;cursor:pointer;}
+.inq-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.inq-name{font-size:15px;font-weight:600;}
+.inq-sport{font-size:12px;color:#888;margin-top:2px;}
+.inq-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
+.inq-status.new{background:#e8f0fe;color:#1a6db5;}
+.inq-status.called{background:#e8f5e9;color:#2d7d46;}
+.inq-status.admitted{background:#f3e8fd;color:#7b1fa2;}
+.inq-status.notinterested{background:#f5f5f5;color:#888;}
+.inq-bottom{margin-top:8px;display:flex;justify-content:space-between;align-items:center;}
+.inq-phone{font-size:13px;color:#1a6db5;font-weight:500;}
+.inq-date{font-size:11px;color:#aaa;}
+.inq-notes{font-size:12px;color:#888;margin-top:6px;line-height:1.4;}
+.status-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.status-btn{font-size:11px;padding:4px 10px;border:1px solid #ddd;border-radius:20px;background:#fff;cursor:pointer;font-family:inherit;color:#555;}
+.status-btn.active-btn{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;justify-content:center;z-index:150;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:1.25rem 1rem 2.5rem;width:100%;max-width:480px;transform:translateY(100%);transition:transform 0.25s ease;max-height:90vh;overflow-y:auto;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 1rem;}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:0.75rem;}
+.field-label{font-size:12px;color:#888;font-weight:500;margin-bottom:5px;margin-top:14px;}
+.modal input,.modal select,.modal textarea{width:100%;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none;}
+.modal textarea{resize:none;height:80px;}
+.modal-btns{display:flex;gap:8px;margin-top:1.5rem;}
+.btn-cancel{flex:1;padding:13px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:15px;cursor:pointer;color:#888;font-family:inherit;}
+.btn-save{flex:2;padding:13px;border:none;border-radius:10px;background:#1a1a1a;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;display:inline-block;}
+.tag-green{background:#e8f5e9;color:#2d7d46;}
+.tag-amber{background:#fff8e1;color:#b8860b;}
+.tag-red{background:#fdecea;color:#c0392b;}
+.tag-blue{background:#e8f0fe;color:#1a6db5;}
+
+</style>
+</head>
+<body>
+
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <div class="login-logo">🏆</div>
+  <div class="login-title">SportIQ Academy</div>
+  <div class="login-sub">Admin Portal — Namakkal</div>
+  <input class="login-field" type="text" id="loginUser" placeholder="Your name (e.g. Sathish)" autocomplete="off"/>
+  <input class="login-field" type="password" id="loginPass" placeholder="Password" autocomplete="off"/>
+  <button class="login-btn" onclick="doLogin()">Sign In</button>
+  <div class="login-error" id="loginError"></div>
+</div>
+
+<!-- ── APP ── -->
+<div id="appShell">
+
+  <!-- DASHBOARD -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="header">
+      <div class="header-top">
+        <span class="academy-name">SportIQ Academy</span>
+        <button class="logout-btn" onclick="doLogout()">Sign out</button>
+      </div>
+      <div class="page-title" id="dashGreeting">Dashboard</div>
+    </div>
+    <div id="dashContent"></div>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div class="screen" id="screen-attendance">
+    <div class="header">
+      <div class="header-top"><span class="academy-name">SportIQ Academy</span></div>
+      <div class="page-title">Attendance</div>
+    </div>
+    <div class="date-bar">
+      <button class="date-arrow" onclick="changeDate(-1)">‹</button>
+      <div class="date-center">
+        <div class="date-display" id="dateDisplay">—</div>
+        <div class="date-sub" id="dateSub"></div>
+      </div>
+      <div class="date-input-wrap">
+        <button class="date-arrow" style="font-size:14px;">📅</button>
+        <input type="date" id="datePicker" onchange="pickDate(this.value)"/>
+      </div>
+      <button class="date-arrow" onclick="changeDate(1)">›</button>
+    </div>
+    <div class="tab-row">
+      <div class="tab active" onclick="switchSession('morning')">Morning</div>
+      <div class="tab" onclick="switchSession('evening')">Evening</div>
+    </div>
+    <div class="batch-row" id="batchRow"></div>
+    <div class="summary-row">
+      <div class="stat-card"><div class="stat-num dark" id="totalCount">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-num green" id="presentCount">0</div><div class="stat-label">Present</div></div>
+      <div class="stat-card"><div class="stat-num red" id="absentCount">0</div><div class="stat-label">Absent</div></div>
+    </div>
+    <div class="section">
+      <div class="section-label">Students</div>
+      <div id="studentList"></div>
+      <button class="add-btn" onclick="openModal('addStudent')">＋ Add Student</button>
+    </div>
+    <div class="save-bar">
+      <span class="saved-badge" id="savedBadge"></span>
+      <button class="save-btn" onclick="saveAttendance()">Save Attendance</button>
+    </div>
+  </div>
+
+  <!-- PROFILES -->
+  <div class="screen" id="screen-profiles">
+    <div class="header">
+      <div class="header-top"><span class="academy-name">SportIQ Academy</span>
+        <button class="logout-btn" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="openModal('addProfile')">＋ Add</button>
+      </div>
+      <div class="page-title">Profiles</div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" placeholder="🔍  Search student or parent..." oninput="filterProfiles(this.value)" id="profileSearch"/>
+    </div>
+    <div class="filter-row" id="profileFilters"></div>
+    <div style="padding:0.75rem 1rem 1rem;" id="profileList"></div>
+  </div>
+
+  <!-- INQUIRIES -->
+  <div class="screen" id="screen-inquiries">
+    <div class="header">
+      <div class="header-top"><span class="academy-name">SportIQ Academy</span>
+        <button class="logout-btn" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="openModal('addInquiry')">＋ Add</button>
+      </div>
+      <div class="page-title">Inquiries</div>
+    </div>
+    <div class="filter-row" id="inqFilters" style="padding:0.75rem 1rem;"></div>
+    <div style="padding:0 1rem 1rem;" id="inquiryList"></div>
+  </div>
+
+</div><!-- end appShell -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav" style="display:none;">
+  <button class="nav-item active" id="nav-dashboard" onclick="showScreen('dashboard')"><span class="nav-icon">⊞</span>Home</button>
+  <button class="nav-item" id="nav-attendance" onclick="showScreen('attendance')"><span class="nav-icon">✓</span>Attendance</button>
+  <button class="nav-item" id="nav-profiles" onclick="showScreen('profiles')"><span class="nav-icon">👤</span>Profiles</button>
+  <button class="nav-item" id="nav-inquiries" onclick="showScreen('inquiries')"><span class="nav-icon">📋</span>Inquiries</button>
+</div>
+
+<!-- PROFILE DETAIL -->
+<div id="profileDetail">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeProfileDetail()">‹</button>
+    <div style="font-size:16px;font-weight:600;">Student Profile</div>
+  </div>
+  <div id="profileDetailContent"></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+
+<script type="module">
+
+// ── FIREBASE SETUP ────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgMtG07X52sFQVX6hRZUF0bBslzZIfEk4",
+    authDomain: "a-sports-academy.firebaseapp.com",
+    projectId: "a-sports-academy",
+    storageBucket: "a-sports-academy.firebasestorage.app",
+    messagingSenderId: "960624783327",
+    appId: "1:960624783327:web:e173748c36596c4ea11e6a"
+  };
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+// ── FIRESTORE HELPERS ────────────────────────────────
+async function fsSet(path, data) {
+  try {
+    const parts = path.split('/');
+    const ref = parts.length === 2 ? doc(db, parts[0], parts[1]) : doc(db, parts[0], parts[1], parts[2], parts[3]);
+    await setDoc(ref, data, { merge: true });
+    return true;
+  } catch(e) { console.error('fsSet error', e); return false; }
+}
+
+async function fsGet(path) {
+  try {
+    const parts = path.split('/');
+    const ref = parts.length === 2 ? doc(db, parts[0], parts[1]) : doc(db, parts[0], parts[1], parts[2], parts[3]);
+    const snap = await getDoc(ref);
+    return snap.exists() ? snap.data() : null;
+  } catch(e) { console.error('fsGet error', e); return null; }
+}
+
+async function fsGetCollection(colPath) {
+  try {
+    const snap = await getDocs(collection(db, colPath));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { console.error('fsGetCollection error', e); return []; }
+}
+
+// ── SAVE ALL TO FIREBASE ──────────────────────────────
+async function saveAll() {
+  // save to localStorage as cache
+  localStorage.setItem('aca_students', JSON.stringify(students));
+  localStorage.setItem('aca_attHistory', JSON.stringify(attHistory));
+  localStorage.setItem('aca_inquiries', JSON.stringify(inquiries));
+  localStorage.setItem('aca_nextid', JSON.stringify(nextId));
+  // save to Firestore
+  try {
+    await fsSet('academy/students', { data: JSON.stringify(students) });
+    await fsSet('academy/attHistory', { data: JSON.stringify(attHistory) });
+    await fsSet('academy/inquiries', { data: JSON.stringify(inquiries) });
+    await fsSet('academy/meta', { nextId });
+  } catch(e) { console.error('Firestore save error', e); }
+}
+
+async function loadFromFirebase() {
+  try {
+    showLoader('Loading data...');
+    const [studSnap, attSnap, inqSnap, metaSnap] = await Promise.all([
+      fsGet('academy/students'),
+      fsGet('academy/attHistory'),
+      fsGet('academy/inquiries'),
+      fsGet('academy/meta'),
+    ]);
+    if (studSnap) students = JSON.parse(studSnap.data);
+    if (attSnap) attHistory = JSON.parse(attSnap.data);
+    if (inqSnap) inquiries = JSON.parse(inqSnap.data);
+    if (metaSnap) nextId = metaSnap.nextId || nextId;
+    // also update localStorage cache
+    localStorage.setItem('aca_students', JSON.stringify(students));
+    localStorage.setItem('aca_attHistory', JSON.stringify(attHistory));
+    localStorage.setItem('aca_inquiries', JSON.stringify(inquiries));
+    hideLoader();
+    return true;
+  } catch(e) {
+    console.error('Firebase load error', e);
+    hideLoader();
+    return false;
+  }
+}
+
+function showLoader(msg) {
+  let el = document.getElementById('globalLoader');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'globalLoader';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;font-size:15px;color:#1a1a1a;font-family:-apple-system,sans-serif;gap:12px;';
+    el.innerHTML = '<div style="font-size:32px;">🏆</div><div id="loaderMsg">Loading...</div>';
+    document.body.appendChild(el);
+  }
+  document.getElementById('loaderMsg').textContent = msg || 'Loading...';
+  el.style.display = 'flex';
+}
+
+function hideLoader() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.style.display = 'none';
+}
+
+
+
+// ── QUOTES ────────────────────────────────────────────
+const QUOTES=[
+  "Champions are made in the hours when others are sleeping.",
+  "Every day is a new chance to get better.",
+  "The pain you feel today is the strength you feel tomorrow.",
+  "Train hard. Play harder. Win together.",
+  "Discipline is the bridge between goals and achievement.",
+  "Success is no accident. It is hard work and dedication.",
+  "Push yourself, because no one else will do it for you.",
+  "Great things never come from comfort zones.",
+  "The harder you work, the luckier you get.",
+  "Believe in the process. Trust the journey.",
+  "Every champion was once a contender who refused to give up.",
+  "Sports teach you character, it teaches you to play by the rules.",
+];
+
+
+// ── SPORT SKILLS ─────────────────────────────────────
+const SPORT_SKILLS={
+  Football:['Dribbling','Passing','Shooting','Defending','Fitness','Attitude'],
+  Basketball:['Dribbling','Shooting','Defense','Passing','Fitness','Teamwork'],
+  Cricket:['Batting','Bowling','Fielding','Fitness','Attitude','Teamwork'],
+};
+const POSITIONS={
+  Football:['Goalkeeper','Defender','Midfielder','Striker','Winger'],
+  Basketball:['Point Guard','Shooting Guard','Small Forward','Power Forward','Center'],
+  Cricket:['Batsman','Bowler','All-rounder','Wicket Keeper','Fielder'],
+};
+const LEVELS=['Beginner','Intermediate','Advanced','Elite'];
+const DOMINANT={Football:['Right Foot','Left Foot','Both'],Basketball:['Right Hand','Left Hand','Both'],Cricket:['Right Hand','Left Hand','Both']};
+// ── BATCHES ───────────────────────────────────────────
+const BATCHES={morning:['Football','Basketball','Cricket'],evening:['Basketball','Football']};
+const ALL_SPORTS=['Football','Basketball','Cricket'];
+
+// ── DEFAULT DATA ──────────────────────────────────────
+const DEFAULT_STUDENTS={
+  morning:{
+    Football:[
+      {id:1,name:'Ashok',studName:'Josith Rakshan',phone:'99945-63364',dob:'14/02/2018',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:2,name:'Sujitha',studName:'Sharvesh Aryan',phone:'8870260814',dob:'16/04/2015',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:3,name:'Mohanraj',studName:'Darsan MS',phone:'9841557996',dob:'11/12/2014',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:4,name:'Dr.Shakthivel',studName:'Kathir Vedanth',phone:'9943950610',dob:'28/10/2018',fee:'paid',feeAmount:2500,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:5,name:'Sathyavani',studName:'Nikhilesh',phone:'9952411388',dob:'15/05/2014',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:6,name:'Venkatesh',studName:'Hari Aathiran',phone:'9443471667',dob:'15/12/2016',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'01/05/2024',feeHistory:[]},
+      {id:7,name:'Raja',studName:'Nithesh Prajin',phone:'9894282181',dob:'02/12/2013',fee:'paid',feeAmount:20000,feeType:'yearly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:8,name:'Nagaraj',studName:'Viyas',phone:'9944492500',dob:'05/07/2013',fee:'partial',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:9,name:'Nandhakumar',studName:'Sujan',phone:'6374508036',dob:'07/09/2014',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:10,name:'Mohan Babu',studName:'Ruthvik Gowtham',phone:'9865290240',dob:'17/09/2015',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:11,name:'Yogalakshmi',studName:'Bala',phone:'9384518095',dob:'15/08/2017',fee:'unpaid',feeAmount:1500,feeType:'monthly',joinDate:'01/06/2024',feeHistory:[]},
+      {id:12,name:'Senthil',studName:'Guhan',phone:'9442385442',dob:'20/03/2013',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:13,name:'Sathyaraj',studName:'Mehith',phone:'9843709315',dob:'',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:14,name:'Jagadeesh',studName:'Nikil Aarav',phone:'8778350721',dob:'08/03/2015',fee:'partial',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:15,name:'Muthuselvam',studName:'MK Kanish Kannan',phone:'9791361209',dob:'',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:16,name:'Nirmala',studName:'Kanish',phone:'9080246005',dob:'25/06/2016',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:17,name:'Swaminathan',studName:'Yuvaneshakumar',phone:'7092295577',dob:'',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:18,name:'Brinda',studName:'Sanjay',phone:'9626724596',dob:'14/09/2019',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:19,name:'Mohanraj',studName:'Vishagan',phone:'9841557996',dob:'06/08/2019',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+    ],
+    Basketball:[{id:50,name:'Parent A',studName:'Student A',phone:'',dob:'',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'',feeHistory:[]}],
+    Cricket:[{id:60,name:'Parent A',studName:'Student A',phone:'',dob:'',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'',feeHistory:[]}]
+  },
+  evening:{
+    Basketball:[{id:80,name:'Parent A',studName:'Student A',phone:'',dob:'',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'',feeHistory:[]}],
+    Football:[
+      {id:100,name:'Rajkumar',studName:'Dhukilovian',phone:'9629370097',dob:'27/03/2017',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:101,name:'Sathishkumar',studName:'Nilan',phone:'7708963090',dob:'15/06/2019',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:102,name:'Nagarajan/Gaya',studName:'Pragna NG',phone:'9786122785',dob:'01/09/2019',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:103,name:'Reena',studName:'RK Harun',phone:'7904928101',dob:'23/07/2017',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:104,name:'Ilavarasan',studName:'Thanvisana',phone:'9952580234',dob:'02/05/2016',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:105,name:'Ilavarasan',studName:'Nethanya',phone:'9952580234',dob:'02/01/2019',fee:'partial',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:106,name:'Priya',studName:'Nilan Kavinraj',phone:'8248703056',dob:'09/09/2020',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:107,name:'Karthick',studName:'KS Hanish',phone:'9360565693',dob:'11/05/2016',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:108,name:'Karthikeyan',studName:'Rudraesh',phone:'9789703827',dob:'06/03/2017',fee:'unpaid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+      {id:109,name:'Vasu',studName:'Jithesh',phone:'9344732599',dob:'12/09/2016',fee:'paid',feeAmount:2000,feeType:'monthly',joinDate:'01/04/2024',feeHistory:[]},
+    ]
+  }
+};
+
+const DEFAULT_INQUIRIES=[
+  {id:1001,name:'Aravind Kumar',phone:'9876512345',sport:'Football',session:'morning',status:'new',notes:'Interested for his son, age 10',date:'20/04/2025'},
+  {id:1002,name:'Meena Devi',phone:'9865423110',sport:'Basketball',session:'evening',status:'called',notes:'Mother enquired for daughter age 12',date:'21/04/2025'},
+  {id:1003,name:'Raman S',phone:'9944312678',sport:'Cricket',session:'morning',status:'admitted',notes:'Admitted. Starts Monday.',date:'18/04/2025'},
+];
+
+// ── STATE ─────────────────────────────────────────────
+let students=JSON.parse(localStorage.getItem('aca_students')||'null')||JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
+let attHistory=JSON.parse(localStorage.getItem('aca_attHistory')||'[]');
+let inquiries=JSON.parse(localStorage.getItem('aca_inquiries')||'null')||JSON.parse(JSON.stringify(DEFAULT_INQUIRIES));
+let nextId=JSON.parse(localStorage.getItem('aca_nextid')||'200');
+let loggedInUser=localStorage.getItem('aca_user')||'';
+
+let session='morning',sport='Football',expandedId=null,selectedDate=todayKey();
+let profileFilter='All',inqFilter='all',profileSearchTerm='';
+let workingState={};
+
+// saveAll is now defined above as async Firebase version
+
+// ── HELPERS ───────────────────────────────────────────
+function initials(n){return(n||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function keyToDate(k){const[y,m,d]=k.split('-');return new Date(+y,+m-1,+d);}
+function fmtKey(k){return keyToDate(k).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});}
+function fmtMoney(n){return '₹'+Number(n).toLocaleString('en-IN');}
+
+function calcAge(dob){
+  if(!dob)return null;
+  const parts=dob.split('/');
+  if(parts.length!==3)return null;
+  const d=new Date(+parts[2],+parts[1]-1,+parts[0]);
+  if(isNaN(d))return null;
+  const today=new Date();
+  let age=today.getFullYear()-d.getFullYear();
+  const m=today.getMonth()-d.getMonth();
+  if(m<0||(m===0&&today.getDate()<d.getDate()))age--;
+  return age;
+}
+
+function calcCategory(dob){
+  const age=calcAge(dob);
+  if(age===null)return null;
+  if(age<=8)return{label:'Under-8',short:'U8',color:'#1a6db5',bg:'#e8f0fe'};
+  if(age<=10)return{label:'Under-10',short:'U10',color:'#2d7d46',bg:'#e8f5e9'};
+  if(age<=12)return{label:'Under-12',short:'U12',color:'#b8860b',bg:'#fff8e1'};
+  if(age<=14)return{label:'Under-14',short:'U14',color:'#c0392b',bg:'#fdecea'};
+  if(age<=16)return{label:'Under-16',short:'U16',color:'#6a1b9a',bg:'#f3e5f5'};
+  if(age<=18)return{label:'Under-18',short:'U18',color:'#00695c',bg:'#e0f2f1'};
+  return{label:'Senior',short:'SR',color:'#555',bg:'#f0f0ee'};
+}
+function getAllStudents(){
+  let all=[];
+  Object.keys(BATCHES).forEach(sess=>Object.keys(students[sess]).forEach(sp=>{
+    students[sess][sp].forEach(st=>all.push({...st,session:sess,sport:sp}));
+  }));
+  return all;
+}
+
+// ── LOGIN ─────────────────────────────────────────────
+const PASSWORD='sportiq2025';
+function doLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!user){document.getElementById('loginError').textContent='Please enter your name.';return;}
+  if(pass!==PASSWORD){document.getElementById('loginError').textContent='Incorrect password. Try again.';return;}
+  loggedInUser=user;
+  localStorage.setItem('aca_user',user);
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  document.getElementById('bottomNav').style.display='flex';
+  initApp();
+}
+function doLogout(){
+  localStorage.removeItem('aca_user');
+  loggedInUser='';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('bottomNav').style.display='none';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent='';
+}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+async function initApp(){
+  // Try loading from Firebase first
+  const loaded = await loadFromFirebase();
+  if (!loaded) {
+    // fallback to localStorage cache
+    console.log('Using cached data');
+  }
+  renderDashboard();
+  updateDateBar();
+  renderBatches();
+  renderStudents();
+  renderProfileFilters();
+  renderProfiles();
+  renderInqFilters();
+  renderInquiries();
+}
+
+// auto-login if already logged in
+if(loggedInUser){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  document.getElementById('bottomNav').style.display='flex';
+  initApp();
+}
+
+// ── SCREEN ────────────────────────────────────────────
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='attendance'){updateDateBar();renderBatches();renderStudents();}
+  if(name==='profiles'){renderProfileFilters();renderProfiles();}
+  if(name==='inquiries'){renderInqFilters();renderInquiries();}
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDashboard(){
+  const hour=new Date().getHours();
+  const greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  document.getElementById('dashGreeting').textContent=greet+', '+loggedInUser+' 👋';
+
+  const today=todayKey();
+  const d=new Date();
+  const dateStr=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const quote=QUOTES[d.getDate()%QUOTES.length];
+
+  let todayP=0,todayT=0;
+  Object.keys(BATCHES).forEach(sess=>Object.keys(students[sess]).forEach(sp=>{
+    const list=students[sess][sp]||[];
+    todayT+=list.length;
+    const saved=attHistory.find(h=>h.date===today&&h.session===sess&&h.sport===sp);
+    todayP+=saved?saved.students.filter(s=>s.present).length:list.length;
+  }));
+
+  let totalStudents=0,fPaid=0,fUnpaid=0,fPartial=0,totalFeeCollected=0;
+  getAllStudents().forEach(st=>{
+    totalStudents++;
+    if(st.fee==='paid'){fPaid++;totalFeeCollected+=st.feeHistory.reduce((s,f)=>s+f.amount,0);}
+    else if(st.fee==='unpaid')fUnpaid++;
+    else fPartial++;
+  });
+
+  let batchCards='';
+  Object.keys(BATCHES).forEach(sess=>{
+    BATCHES[sess].forEach(sp=>{
+      const list=students[sess][sp]||[];
+      const saved=attHistory.find(h=>h.date===today&&h.session===sess&&h.sport===sp);
+      const present=saved?saved.students.filter(s=>s.present).length:list.length;
+      const pct=list.length?Math.round(present/list.length*100):0;
+      batchCards+=`<div class="batch-card">
+        <div class="bc-left">
+          <div class="bc-name">${sp}</div>
+          <div class="bc-sub">${sess==='morning'?'☀️ Morning':'🌆 Evening'}</div>
+          <div class="bc-bar"><div class="bc-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="bc-right"><div class="bc-count">${present}</div><div class="bc-total">of ${list.length}</div></div>
+      </div>`;
+    });
+  });
+
+  const newInq=inquiries.filter(i=>i.status==='new').length;
+
+  document.getElementById('dashContent').innerHTML=`
+    <div class="dash-hero">
+      <div class="dash-greeting">${dateStr}</div>
+      <div class="dash-quote">"${quote}"</div>
+    </div>
+    <div class="dash-section">
+      <div class="dash-section-title">Today's Attendance</div>
+      <div class="grid3" style="margin-bottom:1rem;">
+        <div class="stat-card"><div class="stat-num dark">${todayT}</div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-num green">${todayP}</div><div class="stat-label">Present</div></div>
+        <div class="stat-card"><div class="stat-num red">${todayT-todayP}</div><div class="stat-label">Absent</div></div>
+      </div>
+    </div>
+    <div class="dash-section">
+      <div class="dash-section-title">Batch Overview</div>
+      ${batchCards}
+    </div>
+    <div class="dash-section">
+      <div class="dash-section-title">Fee Status</div>
+      <div class="grid3" style="margin-bottom:1rem;">
+        <div class="stat-card"><div class="stat-num green">${fPaid}</div><div class="stat-label">Paid</div></div>
+        <div class="stat-card"><div class="stat-num amber">${fPartial}</div><div class="stat-label">Partial</div></div>
+        <div class="stat-card"><div class="stat-num red">${fUnpaid}</div><div class="stat-label">Unpaid</div></div>
+      </div>
+    </div>
+    <div class="dash-section" style="padding-bottom:1rem;">
+      <div class="dash-section-title">Quick Stats</div>
+      <div class="grid2">
+        <div class="stat-card"><div class="stat-num dark">${totalStudents}</div><div class="stat-label">Total Students</div></div>
+        <div class="stat-card"><div class="stat-num blue">${newInq}</div><div class="stat-label">New Inquiries</div></div>
+      </div>
+    </div>`;
+}
+
+// ── ATTENDANCE ────────────────────────────────────────
+function updateDateBar(){
+  const d=keyToDate(selectedDate);
+  document.getElementById('dateDisplay').textContent=d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
+  const today=todayKey();
+  let sub=selectedDate===today?'Today':selectedDate===getPrevKey(today,1)?'Yesterday':selectedDate>today?'Future':Math.round((new Date(today)-new Date(selectedDate))/(864e5))+' days ago';
+  document.getElementById('dateSub').textContent=sub;
+  document.getElementById('datePicker').value=selectedDate;
+}
+function getPrevKey(key,days){const d=keyToDate(key);d.setDate(d.getDate()-days);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function changeDate(dir){const d=keyToDate(selectedDate);d.setDate(d.getDate()+dir);selectedDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');expandedId=null;updateDateBar();renderStudents();}
+function pickDate(val){if(!val)return;selectedDate=val;expandedId=null;updateDateBar();renderStudents();}
+
+function wsKey(){return selectedDate+'_'+session+'_'+sport;}
+function getWS(){
+  const k=wsKey();
+  if(!workingState[k]){
+    const saved=attHistory.find(h=>h.date===selectedDate&&h.session===session&&h.sport===sport);
+    workingState[k]=(students[session][sport]||[]).map(st=>{
+      const snap=saved?saved.students.find(x=>x.id===st.id):null;
+      return{id:st.id,present:snap?snap.present:true,comment:snap?snap.comment:''};
+    });
+  }
+  return workingState[k];
+}
+function resolveList(){
+  const ws=getWS();
+  return(students[session][sport]||[]).map(st=>{
+    const w=ws.find(x=>x.id===st.id)||{present:true,comment:''};
+    return{...st,present:w.present,comment:w.comment};
+  });
+}
+function switchSession(s){
+  session=s;sport=BATCHES[s][0];expandedId=null;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&s==='morning')||(i===1&&s==='evening')));
+  renderBatches();renderStudents();
+}
+function renderBatches(){
+  document.getElementById('batchRow').innerHTML=BATCHES[session].map(b=>`<div class="batch-chip${b===sport?' active':''}" onclick="selectSport('${b}')">${b}</div>`).join('');
+}
+function selectSport(s){sport=s;expandedId=null;renderBatches();renderStudents();}
+function renderStudents(){
+  const list=resolveList();
+  const pCount=list.filter(s=>s.present).length;
+  document.getElementById('totalCount').textContent=list.length;
+  document.getElementById('presentCount').textContent=pCount;
+  document.getElementById('absentCount').textContent=list.length-pCount;
+  const isSaved=attHistory.some(h=>h.date===selectedDate&&h.session===session&&h.sport===sport);
+  const today=todayKey();
+  const sub=document.getElementById('dateSub').textContent;
+  const tag=selectedDate===today?'<span class="tag tag-green">Today</span>':selectedDate<today?`<span class="tag tag-amber">${sub}</span>`:'';
+  const savedTag=isSaved?'<span class="tag tag-green">✓ Saved</span>':'';
+  document.getElementById('studentList').innerHTML=
+    `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${tag}${savedTag}</div>`+
+    list.map(st=>`
+    <div class="student-card">
+      <div class="student-row" onclick="toggleExpand(${st.id})">
+        <div class="avatar">${initials(st.studName||st.name)}</div>
+        <div class="student-info">
+          <div class="student-name">${st.studName||'—'}</div>
+          <div class="student-sub">Parent: ${st.name}${st.comment?' · '+st.comment:''}</div>
+        </div>
+        <div class="toggle-wrap">
+          <button class="toggle ${st.present?'present':'absent'}" onclick="event.stopPropagation();togglePresent(${st.id})"><div class="toggle-dot"></div></button>
+          <span class="toggle-status ${st.present?'present':'absent'}">${st.present?'Present':'Absent'}</span>
+        </div>
+      </div>
+      ${expandedId===st.id?`<div class="expand-panel">
+        <div class="detail-row"><span class="detail-key">Parent</span><span class="detail-val">${st.name}</span></div>
+        <div class="detail-row"><span class="detail-key">Phone</span><span class="detail-val">${st.phone||'—'}</span></div>
+        <div class="detail-row"><span class="detail-key">Date of Birth</span><span class="detail-val">${st.dob||'—'}</span></div>
+        <div class="comment-label">Comment</div>
+        <input class="comment-input" placeholder="Add a note..." value="${st.comment||''}" onchange="setComment(${st.id},this.value)" onclick="event.stopPropagation()"/>
+      </div>`:''}
+    </div>`).join('');
+}
+function togglePresent(id){const ws=getWS();const s=ws.find(x=>x.id===id);if(s){s.present=!s.present;renderStudents();}}
+function toggleExpand(id){expandedId=expandedId===id?null:id;renderStudents();}
+function setComment(id,val){const ws=getWS();const s=ws.find(x=>x.id===id);if(s)s.comment=val;}
+function saveAttendance(){
+  const ws=getWS();
+  attHistory=attHistory.filter(h=>!(h.date===selectedDate&&h.session===session&&h.sport===sport));
+  attHistory.push({date:selectedDate,session,sport,students:ws.map(x=>({...x}))});
+  attHistory.sort((a,b)=>b.date.localeCompare(a.date));
+  saveAll();
+  const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('savedBadge').textContent='✓ Saved at '+t;
+  setTimeout(()=>{document.getElementById('savedBadge').textContent='';},4000);
+  renderStudents();
+}
+
+// ── PROFILES ──────────────────────────────────────────
+function renderProfileFilters(){
+  const filters=['All',...ALL_SPORTS,'U8','U10','U12','U14','U16','U18','Paid','Unpaid','Partial'];
+  document.getElementById('profileFilters').innerHTML=filters.map(f=>
+    `<div class="filter-chip${f===profileFilter?' active':''}" onclick="setProfileFilter('${f}')">${f}</div>`
+  ).join('');
+}
+function setProfileFilter(f){profileFilter=f;renderProfileFilters();renderProfiles();}
+function filterProfiles(val){profileSearchTerm=val;renderProfiles();}
+
+function renderProfiles(){
+  let all=getAllStudents();
+  if(profileFilter==='Paid')all=all.filter(s=>s.fee==='paid');
+  else if(profileFilter==='Unpaid')all=all.filter(s=>s.fee==='unpaid');
+  else if(profileFilter==='Partial')all=all.filter(s=>s.fee==='partial');
+  else if(['U8','U10','U12','U14','U16','U18'].includes(profileFilter)){
+    all=all.filter(s=>{const cat=calcCategory(s.dob);return cat&&cat.short===profileFilter;});
+  } else if(profileFilter!=='All')all=all.filter(s=>s.sport===profileFilter);
+  if(profileSearchTerm){
+    const q=profileSearchTerm.toLowerCase();
+    all=all.filter(s=>(s.studName||'').toLowerCase().includes(q)||(s.name||'').toLowerCase().includes(q));
+  }
+  document.getElementById('profileList').innerHTML=all.length?all.map(st=>`
+    <div class="profile-card" onclick="openProfileDetail(${st.id},'${st.session}','${st.sport}')">
+      <div class="profile-row">
+        <div class="avatar">${initials(st.studName||st.name)}</div>
+        <div class="profile-info">
+          <div class="profile-name">${st.studName||'—'}</div>
+          <div class="profile-sub">Parent: ${st.name} · ${st.session==='morning'?'Morn':'Eve'} ${st.sport}</div>
+          ${(()=>{const cat=calcCategory(st.dob);return cat?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${cat.bg};color:${cat.color};margin-top:3px;display:inline-block;">${cat.label} · Age ${calcAge(st.dob)}</span>`:''})()}
+        </div>
+        <span class="fee-pill ${st.fee}">${st.fee==='paid'?'Paid':st.fee==='partial'?'Partial':'Unpaid'}</span>
+      </div>
+    </div>`).join(''):'<div style="text-align:center;padding:2rem;color:#aaa;font-size:14px;">No students found.</div>';
+}
+
+
+// ── PROFILE STATE ─────────────────────────────────────
+let currentProfileId=null,currentProfileSess=null,currentProfileSport=null;
+let profileViewTab='info'; // info | skills | progress | report
+let selectedMonth=null;
+
+function getMonthKey(offset=0){
+  const d=new Date();
+  d.setMonth(d.getMonth()-offset);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function fmtMonthKey(key){
+  const[y,m]=key.split('-');
+  return new Date(+y,+m-1,1).toLocaleDateString('en-IN',{month:'short',year:'numeric'});
+}
+
+function ensurePerf(st,sport){
+  if(!st.perf)st.perf={position:'',level:'Beginner',dominant:'',coachNote:'',monthly:{}};
+  return st.perf;
+}
+
+function openProfileDetail(id,sess,sp){
+  currentProfileId=id;currentProfileSess=sess;currentProfileSport=sp;
+  profileViewTab='info';
+  selectedMonth=getMonthKey(0);
+  renderProfileDetailFull();
+  document.getElementById('profileDetail').style.display='block';
+}
+
+function renderProfileDetailFull(){
+  const id=currentProfileId,sess=currentProfileSess,sp=currentProfileSport;
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  const perf=ensurePerf(st,sp);
+  const cat=calcCategory(st.dob);
+  const age=calcAge(st.dob);
+
+  const tabs=[
+    {k:'info',l:'Info'},
+    {k:'skills',l:'Skills'},
+    {k:'progress',l:'Progress'},
+    {k:'report',l:'Report Card'},
+  ];
+
+  const tabHTML=`<div style="display:flex;gap:6px;padding:0.75rem 1rem;background:#fff;border-bottom:1px solid #eee;overflow-x:auto;scrollbar-width:none;">
+    ${tabs.map(t=>`<div style="flex-shrink:0;padding:7px 16px;font-size:13px;font-weight:500;border:1px solid ${profileViewTab===t.k?'#1a1a1a':'#ddd'};border-radius:20px;background:${profileViewTab===t.k?'#1a1a1a':'#fff'};color:${profileViewTab===t.k?'#fff':'#888'};cursor:pointer;" onclick="switchProfileTab('${t.k}')">${t.l}</div>`).join('')}
+  </div>`;
+
+  let bodyHTML='';
+
+  if(profileViewTab==='info'){
+    bodyHTML=`
+    <div class="detail-hero">
+      <div class="detail-avatar">${initials(st.studName||st.name)}</div>
+      <div>
+        <div class="detail-stud-name">${st.studName||'—'}</div>
+        <div class="detail-stud-sub">${sess==='morning'?'Morning':'Evening'} · ${sp}</div>
+        ${cat?`<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cat.bg};color:${cat.color};margin-top:6px;display:inline-block;">${cat.label}</span>`:''}
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Student Details</div>
+      <div class="info-row"><span class="info-key">Student Name</span><span class="info-val">${st.studName||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Parent Name</span><span class="info-val">${st.name||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Phone</span><span class="info-val">${st.phone||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Date of Birth</span><span class="info-val">${st.dob||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Age</span><span class="info-val">${age!==null?age+' years':'—'}</span></div>
+      <div class="info-row"><span class="info-key">Category</span><span class="info-val">${cat?`<span style="font-size:12px;font-weight:700;padding:2px 10px;border-radius:20px;background:${cat.bg};color:${cat.color};">${cat.label}</span>`:'—'}</span></div>
+      <div class="info-row"><span class="info-key">Sport</span><span class="info-val">${sp}</span></div>
+      <div class="info-row"><span class="info-key">Batch</span><span class="info-val">${sess==='morning'?'Morning':'Evening'}</span></div>
+      <div class="info-row"><span class="info-key">Joined</span><span class="info-val">${st.joinDate||'—'}</span></div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Player Profile</div>
+      <div class="info-row">
+        <span class="info-key">Position</span>
+        <select onchange="updatePerf(${id},'${sess}','${sp}','position',this.value)" style="border:none;font-size:13px;font-weight:500;color:#1a1a1a;background:transparent;text-align:right;outline:none;font-family:inherit;">
+          <option value="">— Select —</option>
+          ${(POSITIONS[sp]||[]).map(p=>`<option value="${p}"${perf.position===p?' selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Level</span>
+        <select onchange="updatePerf(${id},'${sess}','${sp}','level',this.value)" style="border:none;font-size:13px;font-weight:500;color:#1a1a1a;background:transparent;text-align:right;outline:none;font-family:inherit;">
+          ${LEVELS.map(l=>`<option value="${l}"${perf.level===l?' selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Dominant</span>
+        <select onchange="updatePerf(${id},'${sess}','${sp}','dominant',this.value)" style="border:none;font-size:13px;font-weight:500;color:#1a1a1a;background:transparent;text-align:right;outline:none;font-family:inherit;">
+          <option value="">— Select —</option>
+          ${(DOMINANT[sp]||[]).map(d=>`<option value="${d}"${perf.dominant===d?' selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Fee Details</div>
+      <div class="info-row"><span class="info-key">Fee Amount</span><span class="info-val">₹${Number(st.feeAmount).toLocaleString('en-IN')}</span></div>
+      <div class="info-row"><span class="info-key">Fee Type</span><span class="info-val">${st.feeType==='monthly'?'Monthly':st.feeType==='yearly'?'Yearly':'One-time'}</span></div>
+      <div class="info-row"><span class="info-key">Status</span><span class="info-val"><span class="fee-pill ${st.fee}">${st.fee==='paid'?'Paid':st.fee==='partial'?'Partial':'Unpaid'}</span></span></div>
+    </div>
+    <div class="fee-action-row">
+      <button class="fee-action-btn" onclick="openRecordFee(${id},'${sess}','${sp}')">💰 Record Payment</button>
+      <button class="fee-action-btn" onclick="openEditFee(${id},'${sess}','${sp}')">✏️ Edit Fee</button>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Payment History</div>
+      ${st.feeHistory&&st.feeHistory.length?st.feeHistory.map(f=>`
+        <div class="fee-history-row">
+          <div class="fhr-left"><div class="fhr-amount">₹${Number(f.amount).toLocaleString('en-IN')}</div><div class="fhr-date">${f.date}</div></div>
+          <div class="fhr-right"><span class="fhr-mode">${f.mode}</span><div class="fhr-type">${f.type||''}</div></div>
+        </div>`).join(''):'<div style="padding:14px;font-size:13px;color:#aaa;">No payments recorded yet.</div>'}
+    </div>`;
+  }
+
+  if(profileViewTab==='skills'){
+    const skills=SPORT_SKILLS[sp]||[];
+    const mKey=selectedMonth;
+    if(!perf.monthly[mKey])perf.monthly[mKey]={};
+    const mData=perf.monthly[mKey];
+
+    // build last 6 months for selector
+    const months=Array.from({length:6},(_,i)=>getMonthKey(i));
+
+    bodyHTML=`
+    <div style="padding:1rem;">
+      <div class="perf-title">Rate Skills — Select Month</div>
+      <div class="month-tabs">
+        ${months.map(m=>`<div class="month-tab${m===selectedMonth?' active':''}" onclick="selectMonth('${m}')">${fmtMonthKey(m)}</div>`).join('')}
+      </div>
+      <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:1rem;margin-bottom:1rem;">
+        <div class="perf-title">Skills Rating — ${fmtMonthKey(mKey)}</div>
+        ${skills.map(skill=>{
+          const val=mData[skill]||0;
+          return `<div class="skill-row">
+            <div class="skill-name">${skill}</div>
+            <div class="skill-stars">
+              ${[1,2,3,4,5].map(n=>`<span class="star" onclick="rateStar(${id},'${sess}','${sp}','${skill}',${n},'${mKey}')">${n<=val?'★':'☆'}</span>`).join('')}
+            </div>
+            <div class="skill-val">${val>0?val+'/5':''}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:1rem;margin-bottom:1rem;">
+        <div class="perf-title">Coach Notes — ${fmtMonthKey(mKey)}</div>
+        <textarea style="width:100%;padding:10px;border:1px solid #eee;border-radius:8px;font-size:13px;font-family:inherit;outline:none;resize:none;height:90px;color:#1a1a1a;" 
+          placeholder="Write your observations for this month..."
+          onchange="saveCoachNote(${id},'${sess}','${sp}','${mKey}',this.value)">${mData.note||''}</textarea>
+      </div>
+      <button onclick="saveAllSkills(${id},'${sess}','${sp}')" style="width:100%;padding:13px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">Save Skills</button>
+    </div>`;
+  }
+
+  if(profileViewTab==='progress'){
+    const skills=SPORT_SKILLS[sp]||[];
+    const months=Array.from({length:6},(_,i)=>getMonthKey(5-i)); // oldest to newest
+
+    // quarter view
+    const now=new Date();
+    const quarters=[
+      {label:'Q1',months:['01','02','03']},
+      {label:'Q2',months:['04','05','06']},
+      {label:'Q3',months:['07','08','09']},
+      {label:'Q4',months:['10','11','12']},
+    ];
+    const year=now.getFullYear();
+
+    const qCards=quarters.map(q=>{
+      let totalScore=0,count=0;
+      q.months.forEach(m=>{
+        const key=year+'-'+m;
+        const mData=perf.monthly[key];
+        if(mData){skills.forEach(s=>{if(mData[s]){totalScore+=mData[s];count++;}});}
+      });
+      const avg=count>0?(totalScore/count).toFixed(1):'—';
+      return `<div class="quarter-card">
+        <div class="quarter-label">${q.label} ${year}</div>
+        <div class="quarter-score">${avg}</div>
+        <div class="quarter-sub">${count>0?'avg /5':'no data'}</div>
+      </div>`;
+    }).join('');
+
+    // skill progress bars across months
+    const skillProgress=skills.map(skill=>{
+      const vals=months.map(m=>(perf.monthly[m]&&perf.monthly[m][skill])||0);
+      const latest=vals[vals.length-1];
+      const prev=vals[vals.length-2]||0;
+      const trend=latest>prev?'▲':latest<prev?'▼':'→';
+      const trendClass=latest>prev?'trend-up':latest<prev?'trend-down':'trend-same';
+      const pct=latest?Math.round(latest/5*100):0;
+      const color=pct>=80?'#2d7d46':pct>=60?'#b8860b':pct>=40?'#1a6db5':'#ccc';
+      return `<div class="prog-bar-wrap">
+        <div class="prog-label">
+          <span>${skill}</span>
+          <span>${latest>0?latest+'/5 <span class="${trendClass}">${trend}</span>':'No data'}</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${color};"></div></div>
+      </div>`;
+    }).join('');
+
+    // monthly avg trend
+    const monthlyAvgs=months.map(m=>{
+      const mData=perf.monthly[m];
+      if(!mData)return null;
+      let total=0,count=0;
+      skills.forEach(s=>{if(mData[s]){total+=mData[s];count++;}});
+      return count>0?(total/count).toFixed(1):null;
+    });
+
+    const trendRows=months.map((m,i)=>{
+      const val=monthlyAvgs[i];
+      const prev=monthlyAvgs[i-1];
+      if(!val)return '';
+      const trend=prev&&val>prev?'▲ Improving':prev&&val<prev?'▼ Dropped':'→ Steady';
+      const trendClass=prev&&val>prev?'trend-up':prev&&val<prev?'trend-down':'trend-same';
+      return `<div class="info-row">
+        <span class="info-key">${fmtMonthKey(m)}</span>
+        <span class="info-val">${val}/5 <span class="${trendClass}" style="font-size:11px;">${i>0?trend:''}</span></span>
+      </div>`;
+    }).filter(Boolean).reverse().join('');
+
+    bodyHTML=`
+    <div style="padding:1rem;">
+      <div class="perf-title">Quarterly Overview — ${year}</div>
+      <div class="quarter-grid" style="margin-bottom:1rem;">${qCards}</div>
+      <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:1rem;margin-bottom:1rem;">
+        <div class="perf-title">Current Skills (Latest Month)</div>
+        ${skillProgress}
+      </div>
+      <div class="info-card" style="margin:0 0 1rem;">
+        <div class="info-card-title">Monthly Average Trend</div>
+        ${trendRows||'<div style="padding:14px;font-size:13px;color:#aaa;">Rate skills monthly to see progress.</div>'}
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('profileDetailContent').innerHTML=`
+    <div class="detail-header">
+      <button class="back-btn" onclick="closeProfileDetail()">‹</button>
+      <div style="font-size:16px;font-weight:600;">${st.studName||'Student Profile'}</div>
+    </div>
+    ${tabHTML}
+    ${bodyHTML}`;
+
+  document.getElementById('profileDetail').style.display='block';
+}
+
+function switchProfileTab(tab){profileViewTab=tab;if(tab==='report'){generateReportCard();return;}renderProfileDetailFull();}
+function selectMonth(m){selectedMonth=m;renderProfileDetailFull();}
+
+function updatePerf(id,sess,sp,field,val){
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  ensurePerf(st,sp)[field]=val;
+  saveAll();
+}
+
+function rateStar(id,sess,sp,skill,val,mKey){
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  const perf=ensurePerf(st,sp);
+  if(!perf.monthly[mKey])perf.monthly[mKey]={};
+  perf.monthly[mKey][skill]=val;
+  saveAll();
+  renderProfileDetailFull();
+}
+
+function saveCoachNote(id,sess,sp,mKey,val){
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  const perf=ensurePerf(st,sp);
+  if(!perf.monthly[mKey])perf.monthly[mKey]={};
+  perf.monthly[mKey].note=val;
+  saveAll();
+}
+
+function saveAllSkills(id,sess,sp){
+  saveAll();
+  const badge=document.createElement('div');
+  badge.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2d7d46;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;';
+  badge.textContent='✓ Skills saved!';
+  document.body.appendChild(badge);
+  setTimeout(()=>badge.remove(),2000);
+}
+
+
+// ── REPORT CARD ───────────────────────────────────────
+function generateReportCard(){
+  const id=currentProfileId,sess=currentProfileSess,sp=currentProfileSport;
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  const perf=ensurePerf(st,sp);
+  const cat=calcCategory(st.dob);
+  const skills=SPORT_SKILLS[sp]||[];
+
+  // use latest month with data
+  let latestMonth=null,latestData=null;
+  for(let i=0;i<12;i++){
+    const m=getMonthKey(i);
+    if(perf.monthly[m]&&skills.some(s=>perf.monthly[m][s])){latestMonth=m;latestData=perf.monthly[m];break;}
+  }
+
+  let totalScore=0,ratedCount=0;
+  if(latestData){skills.forEach(s=>{if(latestData[s]){totalScore+=latestData[s];ratedCount++;}});}
+  const avg=ratedCount>0?(totalScore/ratedCount):0;
+  const avgPct=Math.round(avg/5*100);
+  const grade=avgPct>=90?'A+':avgPct>=80?'A':avgPct>=70?'B+':avgPct>=60?'B':avgPct>=50?'C':'D';
+  const gradeColor=avgPct>=70?'#2d7d46':avgPct>=50?'#b8860b':'#c0392b';
+
+  const skillBars=skills.map(skill=>{
+    const val=latestData?latestData[skill]||0:0;
+    const pct=Math.round(val/5*100);
+    const color=pct>=80?'#2d7d46':pct>=60?'#b8860b':pct>=40?'#1a6db5':'#eee';
+    return `<div class="rc-skill-item">
+      <div class="rc-skill-label"><span>${skill}</span><span>${val>0?val+'/5':'Not rated'}</span></div>
+      <div class="rc-track"><div class="rc-fill" style="width:${pct}%;background:${color};"></div></div>
+    </div>`;
+  }).join('');
+
+  const note=latestData?latestData.note||'':'';
+  const period=latestMonth?fmtMonthKey(latestMonth):'No data yet';
+
+  document.getElementById('reportCardContent').innerHTML=`
+    <div class="rc-header">
+      <div class="rc-logo">🏆</div>
+      <div class="rc-academy">SportIQ Academy — Namakkal</div>
+      <div class="rc-title">Player Report Card</div>
+      <div class="rc-period">${period}</div>
+    </div>
+    <div class="rc-student-block">
+      <div class="rc-avatar">${initials(st.studName||st.name)}</div>
+      <div>
+        <div class="rc-stud-name">${st.studName||'—'}</div>
+        <div class="rc-stud-sub">${sess==='morning'?'Morning':'Evening'} · ${sp}</div>
+        <div class="rc-stud-sub">Parent: ${st.name} · ${st.phone||''}</div>
+        ${cat?`<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${cat.bg};color:${cat.color};margin-top:4px;display:inline-block;">${cat.label}</span>`:''}
+        ${perf.position?`<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#f0f0ee;color:#555;margin-top:4px;margin-left:4px;display:inline-block;">${perf.position}</span>`:''}
+      </div>
+    </div>
+    ${ratedCount>0?`
+    <div class="rc-overall">
+      <div class="rc-overall-num">${avg.toFixed(1)}<span style="font-size:20px;">/5</span></div>
+      <div class="rc-overall-label">Overall Score</div>
+      <div class="rc-grade" style="color:${gradeColor};">Grade: ${grade}</div>
+    </div>
+    <div class="rc-skill-block">
+      <div class="rc-skill-title">Skills Breakdown</div>
+      ${skillBars}
+    </div>`:'<div style="text-align:center;padding:2rem;color:#aaa;font-size:14px;">Rate skills in the Skills tab first to generate report card.</div>'}
+    ${note?`<div class="rc-note"><div class="rc-note-label">Coach Notes</div><div class="rc-note-text">${note}</div></div>`:''}
+    <div style="margin:0 1rem 1rem;padding:1rem;background:#fff;border:1px solid #eee;border-radius:12px;font-size:12px;color:#888;text-align:center;">
+      Generated by SportIQ Academy · ${new Date().toLocaleDateString('en-IN')}<br>
+      <span style="color:#1a1a1a;font-weight:600;">Every Home. One Sportsperson.</span>
+    </div>`;
+
+  document.getElementById('reportCardView').style.display='block';
+}
+
+function closeReportCard(){document.getElementById('reportCardView').style.display='none';}
+
+// LEGACY STUB
+function _legacy_openProfileDetail(){
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  const feeLabel=st.fee==='paid'?'Paid':st.fee==='partial'?'Partial':'Unpaid';
+  const feeTypeLabel=st.feeType==='monthly'?'Monthly':st.feeType==='yearly'?'Yearly':'One-time';
+  const histRows=st.feeHistory&&st.feeHistory.length?st.feeHistory.map(f=>`
+    <div class="fee-history-row">
+      <div class="fhr-left"><div class="fhr-amount">${fmtMoney(f.amount)}</div><div class="fhr-date">${f.date}</div></div>
+      <div class="fhr-right"><span class="fhr-mode">${f.mode}</span><div class="fhr-type">${f.type||''}</div></div>
+    </div>`).join(''):'<div style="padding:14px;font-size:13px;color:#aaa;">No payments recorded yet.</div>';
+
+  document.getElementById('profileDetailContent').innerHTML=`
+    <div class="detail-hero">
+      <div class="detail-avatar">${initials(st.studName||st.name)}</div>
+      <div>
+        <div class="detail-stud-name">${st.studName||'—'}</div>
+        <div class="detail-stud-sub">${sess==='morning'?'Morning':'Evening'} · ${sp}</div>
+        ${(()=>{const cat=calcCategory(st.dob);return cat?`<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cat.bg};color:${cat.color};margin-top:6px;display:inline-block;">${cat.label}</span>`:''})()}
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Student Details</div>
+      <div class="info-row"><span class="info-key">Student Name</span><span class="info-val">${st.studName||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Parent Name</span><span class="info-val">${st.name||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Phone</span><span class="info-val">${st.phone||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Date of Birth</span><span class="info-val">${st.dob||'—'}</span></div>
+      <div class="info-row"><span class="info-key">Age</span><span class="info-val">${calcAge(st.dob)!==null?calcAge(st.dob)+' years':'—'}</span></div>
+      <div class="info-row"><span class="info-key">Category</span><span class="info-val">${(()=>{const cat=calcCategory(st.dob);return cat?`<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:${cat.bg};color:${cat.color};">${cat.label}</span>`:'—'})()}</span></div>
+      <div class="info-row"><span class="info-key">Sport</span><span class="info-val">${sp}</span></div>
+      <div class="info-row"><span class="info-key">Batch</span><span class="info-val">${sess==='morning'?'Morning':'Evening'}</span></div>
+      <div class="info-row"><span class="info-key">Joined</span><span class="info-val">${st.joinDate||'—'}</span></div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Fee Details</div>
+      <div class="info-row"><span class="info-key">Fee Amount</span><span class="info-val">${fmtMoney(st.feeAmount)}</span></div>
+      <div class="info-row"><span class="info-key">Fee Type</span><span class="info-val">${feeTypeLabel}</span></div>
+      <div class="info-row"><span class="info-key">Status</span><span class="info-val"><span class="fee-pill ${st.fee}">${feeLabel}</span></span></div>
+    </div>
+    <div class="fee-action-row">
+      <button class="fee-action-btn" onclick="openRecordFee(${id},'${sess}','${sp}')">💰 Record Payment</button>
+      <button class="fee-action-btn" onclick="openEditFee(${id},'${sess}','${sp}')">✏️ Edit Fee</button>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Payment History</div>
+      ${histRows}
+    </div>`;
+  document.getElementById('profileDetail').style.display='block';
+}
+
+function closeProfileDetail(){document.getElementById('profileDetail').style.display='none';}
+
+function openRecordFee(id,sess,sp){
+  showModal(`<div class="modal-handle"></div>
+    <div class="modal-title">Record Payment</div>
+    <div class="field-label">Amount (₹)</div><input type="number" id="feeAmt" placeholder="e.g. 2000"/>
+    <div class="field-label">Payment Mode</div>
+    <select id="feeMode"><option value="Cash">Cash</option><option value="Online">Online (UPI/Bank)</option></select>
+    <div class="field-label">Type</div>
+    <select id="feeTypeRec"><option value="Monthly">Monthly</option><option value="Yearly">Yearly</option><option value="One-time">One-time</option></select>
+    <div class="field-label">Date</div><input type="date" id="feeDate" value="${todayKey()}"/>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="recordFeePayment(${id},'${sess}','${sp}')">Save Payment</button>
+    </div>`);
+}
+
+function recordFeePayment(id,sess,sp){
+  const amt=parseInt(document.getElementById('feeAmt').value)||0;
+  const mode=document.getElementById('feeMode').value;
+  const type=document.getElementById('feeTypeRec').value;
+  const date=document.getElementById('feeDate').value;
+  if(!amt){alert('Please enter amount.');return;}
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  if(!st.feeHistory)st.feeHistory=[];
+  st.feeHistory.unshift({amount:amt,mode,type,date:fmtKey(date)});
+  st.fee='paid';
+  saveAll();
+  closeModal();
+  openProfileDetail(id,sess,sp);
+  renderProfiles();
+}
+
+function openEditFee(id,sess,sp){
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  showModal(`<div class="modal-handle"></div>
+    <div class="modal-title">Edit Fee Details</div>
+    <div class="field-label">Fee Amount (₹)</div><input type="number" id="editFeeAmt" value="${st.feeAmount}"/>
+    <div class="field-label">Fee Type</div>
+    <select id="editFeeType">
+      <option value="monthly"${st.feeType==='monthly'?' selected':''}>Monthly</option>
+      <option value="yearly"${st.feeType==='yearly'?' selected':''}>Yearly</option>
+      <option value="onetime"${st.feeType==='onetime'?' selected':''}>One-time</option>
+    </select>
+    <div class="field-label">Fee Status</div>
+    <select id="editFeeStatus">
+      <option value="paid"${st.fee==='paid'?' selected':''}>Paid</option>
+      <option value="partial"${st.fee==='partial'?' selected':''}>Partial</option>
+      <option value="unpaid"${st.fee==='unpaid'?' selected':''}>Unpaid</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEditFee(${id},'${sess}','${sp}')">Save</button>
+    </div>`);
+}
+
+function saveEditFee(id,sess,sp){
+  const st=(students[sess][sp]||[]).find(s=>s.id===id);
+  if(!st)return;
+  st.feeAmount=parseInt(document.getElementById('editFeeAmt').value)||st.feeAmount;
+  st.feeType=document.getElementById('editFeeType').value;
+  st.fee=document.getElementById('editFeeStatus').value;
+  saveAll();closeModal();openProfileDetail(id,sess,sp);renderProfiles();
+}
+
+// ── INQUIRIES ─────────────────────────────────────────
+function renderInqFilters(){
+  const filters=[{k:'all',l:'All'},{k:'new',l:'New'},{k:'called',l:'Called'},{k:'admitted',l:'Admitted'},{k:'notinterested',l:'Not Interested'}];
+  document.getElementById('inqFilters').innerHTML=filters.map(f=>
+    `<div class="filter-chip${f.k===inqFilter?' active':''}" onclick="setInqFilter('${f.k}')">${f.l}</div>`
+  ).join('');
+}
+function setInqFilter(f){inqFilter=f;renderInqFilters();renderInquiries();}
+
+function renderInquiries(){
+  let list=inqFilter==='all'?inquiries:inquiries.filter(i=>i.status===inqFilter);
+  list=[...list].sort((a,b)=>b.id-a.id);
+  document.getElementById('inquiryList').innerHTML=list.length?list.map(inq=>`
+    <div class="inq-card">
+      <div class="inq-top">
+        <div><div class="inq-name">${inq.name}</div><div class="inq-sport">${inq.sport} · ${inq.session==='morning'?'Morning':'Evening'}</div></div>
+        <span class="inq-status ${inq.status}">${inq.status==='notinterested'?'Not Interested':inq.status.charAt(0).toUpperCase()+inq.status.slice(1)}</span>
+      </div>
+      ${inq.notes?`<div class="inq-notes">${inq.notes}</div>`:''}
+      <div class="inq-bottom">
+        <a class="inq-phone" href="tel:${inq.phone}">📞 ${inq.phone}</a>
+        <span class="inq-date">${inq.date}</span>
+      </div>
+      <div class="status-btns">
+        ${['new','called','admitted','notinterested'].map(s=>`<button class="status-btn${inq.status===s?' active-btn':''}" onclick="setInqStatus(${inq.id},'${s}')">${s==='notinterested'?'Not Interested':s.charAt(0).toUpperCase()+s.slice(1)}</button>`).join('')}
+        <button class="status-btn" style="color:#c0392b;" onclick="deleteInq(${inq.id})">Delete</button>
+      </div>
+    </div>`).join(''):'<div style="text-align:center;padding:2rem;color:#aaa;font-size:14px;">No inquiries found.</div>';
+}
+
+function setInqStatus(id,status){
+  const inq=inquiries.find(i=>i.id===id);
+  if(inq){inq.status=status;saveAll();renderInquiries();renderInqFilters();}
+}
+function deleteInq(id){
+  if(!confirm('Delete this inquiry?'))return;
+  inquiries=inquiries.filter(i=>i.id!==id);saveAll();renderInquiries();renderInqFilters();
+}
+
+// ── MODALS ────────────────────────────────────────────
+function showModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('open');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+function openModal(type){
+  if(type==='addStudent'){
+    const all=[...new Set([...BATCHES.morning,...BATCHES.evening])];
+    showModal(`<div class="modal-handle"></div>
+      <div class="modal-title">Add New Student</div>
+      <div class="field-label">Student Name</div><input type="text" id="newStudName" placeholder="e.g. Josith Rakshan"/>
+      <div class="field-label">Parent Name</div><input type="text" id="newName" placeholder="e.g. Ashok"/>
+      <div class="field-label">Parent Phone</div><input type="tel" id="newPhone" placeholder="e.g. 9876543210"/>
+      <div class="field-label">Date of Birth</div><input type="text" id="newDob" placeholder="e.g. 14/02/2018"/>
+      <div class="field-label">Join Date</div><input type="text" id="newJoin" placeholder="e.g. 01/06/2025"/>
+      <div class="field-label">Sport</div><select id="newSport">${all.map(s=>`<option>${s}</option>`).join('')}</select>
+      <div class="field-label">Session</div><select id="newSession"><option value="morning">Morning</option><option value="evening">Evening</option></select>
+      <div class="field-label">Fee Amount (₹)</div><input type="number" id="newFeeAmt" placeholder="e.g. 2000" value="2000"/>
+      <div class="field-label">Fee Type</div><select id="newFeeType"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="onetime">One-time</option></select>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="addStudent()">Add Student</button>
+      </div>`);
+    document.getElementById('newSport').value=sport;
+    document.getElementById('newSession').value=session;
+  }
+  if(type==='addProfile'){
+    openModal('addStudent');
+  }
+  if(type==='addInquiry'){
+    showModal(`<div class="modal-handle"></div>
+      <div class="modal-title">New Inquiry</div>
+      <div class="field-label">Name</div><input type="text" id="inqName" placeholder="Parent or student name"/>
+      <div class="field-label">Phone</div><input type="tel" id="inqPhone" placeholder="e.g. 9876543210"/>
+      <div class="field-label">Sport Interested In</div>
+      <select id="inqSport">${ALL_SPORTS.map(s=>`<option>${s}</option>`).join('')}</select>
+      <div class="field-label">Preferred Session</div>
+      <select id="inqSession"><option value="morning">Morning</option><option value="evening">Evening</option></select>
+      <div class="field-label">Notes</div><textarea id="inqNotes" placeholder="Any notes about this inquiry..."></textarea>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="addInquiry()">Save Inquiry</button>
+      </div>`);
+  }
+}
+
+function addStudent(){
+  const studName=document.getElementById('newStudName').value.trim();
+  const name=document.getElementById('newName').value.trim();
+  const phone=document.getElementById('newPhone').value.trim();
+  const dob=document.getElementById('newDob').value.trim();
+  const join=document.getElementById('newJoin').value.trim();
+  const sp=document.getElementById('newSport').value;
+  const se=document.getElementById('newSession').value;
+  const feeAmt=parseInt(document.getElementById('newFeeAmt').value)||2000;
+  const feeType=document.getElementById('newFeeType').value;
+  if(!studName){alert('Please enter student name.');return;}
+  if(!students[se][sp])students[se][sp]=[];
+  students[se][sp].push({id:nextId++,name,studName,phone,dob,joinDate:join,fee:'unpaid',feeAmount:feeAmt,feeType,feeHistory:[]});
+  saveAll();closeModal();
+  if(se===session&&sp===sport)renderStudents();
+  renderProfiles();
+}
+
+function addInquiry(){
+  const name=document.getElementById('inqName').value.trim();
+  const phone=document.getElementById('inqPhone').value.trim();
+  const sp=document.getElementById('inqSport').value;
+  const se=document.getElementById('inqSession').value;
+  const notes=document.getElementById('inqNotes').value.trim();
+  if(!name){alert('Please enter a name.');return;}
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  inquiries.unshift({id:nextId++,name,phone,sport:sp,session:se,status:'new',notes,date:today});
+  saveAll();closeModal();renderInquiries();renderInqFilters();renderDashboard();
+}
+
+</script>
+</body>
+</html>
