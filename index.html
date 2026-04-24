@@ -259,7 +259,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="login-logo">🏆</div>
   <div class="login-title">SportIQ Academy</div>
   <div class="login-sub">Admin Portal — Namakkal</div>
-  <input class="login-field" type="text" id="loginUser" placeholder="Your name (e.g. Sathish)" autocomplete="off"/>
+  <input class="login-field" type="text" id="loginUser" placeholder="Your email address" autocomplete="off"/>
   <input class="login-field" type="password" id="loginPass" placeholder="Password" autocomplete="off"/>
   <button class="login-btn" onclick="doLogin()">Sign In</button>
   <div class="login-error" id="loginError"></div>
@@ -375,55 +375,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 // ── FIREBASE SETUP ────────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAgMtG07X52sFQVX6hRZUF0bBslzZIfEk4",
-    authDomain: "a-sports-academy.firebaseapp.com",
-    projectId: "a-sports-academy",
-    storageBucket: "a-sports-academy.firebasestorage.app",
-    messagingSenderId: "960624783327",
-    appId: "1:960624783327:web:e173748c36596c4ea11e6a"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAgMtG07X52sFQVX6hRZUF0bBslzZIfEk4",
+  authDomain: "a-sports-academy.firebaseapp.com",
+  projectId: "a-sports-academy",
+  storageBucket: "a-sports-academy.firebasestorage.app",
+  messagingSenderId: "960624783327",
+  appId: "1:960624783327:web:e173748c36596c4ea11e6a"
+};
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
 
-// ── FIRESTORE HELPERS ────────────────────────────────
-async function fsSet(path, data) {
+// ── FIRESTORE HELPERS ─────────────────────────────────
+async function fsSet(docPath, data) {
   try {
-    const parts = path.split('/');
-    const ref = parts.length === 2 ? doc(db, parts[0], parts[1]) : doc(db, parts[0], parts[1], parts[2], parts[3]);
-    await setDoc(ref, data, { merge: true });
+    const parts = docPath.split('/');
+    await setDoc(doc(db, parts[0], parts[1]), data, { merge: true });
     return true;
   } catch(e) { console.error('fsSet error', e); return false; }
 }
 
-async function fsGet(path) {
+async function fsGet(docPath) {
   try {
-    const parts = path.split('/');
-    const ref = parts.length === 2 ? doc(db, parts[0], parts[1]) : doc(db, parts[0], parts[1], parts[2], parts[3]);
-    const snap = await getDoc(ref);
+    const parts = docPath.split('/');
+    const snap = await getDoc(doc(db, parts[0], parts[1]));
     return snap.exists() ? snap.data() : null;
   } catch(e) { console.error('fsGet error', e); return null; }
 }
 
-async function fsGetCollection(colPath) {
-  try {
-    const snap = await getDocs(collection(db, colPath));
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch(e) { console.error('fsGetCollection error', e); return []; }
-}
-
-// ── SAVE ALL TO FIREBASE ──────────────────────────────
 async function saveAll() {
-  // save to localStorage as cache
   localStorage.setItem('aca_students', JSON.stringify(students));
   localStorage.setItem('aca_attHistory', JSON.stringify(attHistory));
   localStorage.setItem('aca_inquiries', JSON.stringify(inquiries));
   localStorage.setItem('aca_nextid', JSON.stringify(nextId));
-  // save to Firestore
   try {
     await fsSet('academy/students', { data: JSON.stringify(students) });
     await fsSet('academy/attHistory', { data: JSON.stringify(attHistory) });
@@ -434,18 +423,17 @@ async function saveAll() {
 
 async function loadFromFirebase() {
   try {
-    showLoader('Loading data...');
+    showLoader('Loading your academy data...');
     const [studSnap, attSnap, inqSnap, metaSnap] = await Promise.all([
       fsGet('academy/students'),
       fsGet('academy/attHistory'),
       fsGet('academy/inquiries'),
       fsGet('academy/meta'),
     ]);
-    if (studSnap) students = JSON.parse(studSnap.data);
-    if (attSnap) attHistory = JSON.parse(attSnap.data);
-    if (inqSnap) inquiries = JSON.parse(inqSnap.data);
-    if (metaSnap) nextId = metaSnap.nextId || nextId;
-    // also update localStorage cache
+    if (studSnap && studSnap.data) students = JSON.parse(studSnap.data);
+    if (attSnap && attSnap.data) attHistory = JSON.parse(attSnap.data);
+    if (inqSnap && inqSnap.data) inquiries = JSON.parse(inqSnap.data);
+    if (metaSnap && metaSnap.nextId) nextId = metaSnap.nextId;
     localStorage.setItem('aca_students', JSON.stringify(students));
     localStorage.setItem('aca_attHistory', JSON.stringify(attHistory));
     localStorage.setItem('aca_inquiries', JSON.stringify(inquiries));
@@ -463,8 +451,8 @@ function showLoader(msg) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'globalLoader';
-    el.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;font-size:15px;color:#1a1a1a;font-family:-apple-system,sans-serif;gap:12px;';
-    el.innerHTML = '<div style="font-size:32px;">🏆</div><div id="loaderMsg">Loading...</div>';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;font-size:15px;color:#1a1a1a;font-family:-apple-system,sans-serif;gap:12px;';
+    el.innerHTML = '<div style="font-size:40px;">🏆</div><div id="loaderMsg">Loading...</div>';
     document.body.appendChild(el);
   }
   document.getElementById('loaderMsg').textContent = msg || 'Loading...';
@@ -476,24 +464,23 @@ function hideLoader() {
   if (el) el.style.display = 'none';
 }
 
-
-
-// ── QUOTES ────────────────────────────────────────────
-const QUOTES=[
-  "Champions are made in the hours when others are sleeping.",
-  "Every day is a new chance to get better.",
-  "The pain you feel today is the strength you feel tomorrow.",
-  "Train hard. Play harder. Win together.",
-  "Discipline is the bridge between goals and achievement.",
-  "Success is no accident. It is hard work and dedication.",
-  "Push yourself, because no one else will do it for you.",
-  "Great things never come from comfort zones.",
-  "The harder you work, the luckier you get.",
-  "Believe in the process. Trust the journey.",
-  "Every champion was once a contender who refused to give up.",
-  "Sports teach you character, it teaches you to play by the rules.",
-];
-
+// ── FIREBASE AUTH ─────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // User is signed in
+    loggedInUser = user.email.split('@')[0];
+    localStorage.setItem('aca_user', loggedInUser);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    document.getElementById('bottomNav').style.display = 'flex';
+    await initApp();
+  } else {
+    // Not signed in
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+    document.getElementById('bottomNav').style.display = 'none';
+  }
+});
 
 // ── SPORT SKILLS ─────────────────────────────────────
 const SPORT_SKILLS={
@@ -615,37 +602,31 @@ function getAllStudents(){
 }
 
 // ── LOGIN ─────────────────────────────────────────────
-const PASSWORD='sportiq2025';
-function doLogin(){
-  const user=document.getElementById('loginUser').value.trim();
-  const pass=document.getElementById('loginPass').value;
-  if(!user){document.getElementById('loginError').textContent='Please enter your name.';return;}
-  if(pass!==PASSWORD){document.getElementById('loginError').textContent='Incorrect password. Try again.';return;}
-  loggedInUser=user;
-  localStorage.setItem('aca_user',user);
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
-  document.getElementById('bottomNav').style.display='flex';
-  initApp();
+async function doLogin(){
+  const email = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if(!email){ document.getElementById('loginError').textContent='Please enter your email.'; return; }
+  if(!pass){ document.getElementById('loginError').textContent='Please enter your password.'; return; }
+  document.getElementById('loginError').textContent = 'Signing in...';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    // onAuthStateChanged will handle the rest
+  } catch(e) {
+    document.getElementById('loginError').textContent = 'Incorrect email or password.';
+  }
 }
-function doLogout(){
+async function doLogout(){
+  await signOut(auth);
   localStorage.removeItem('aca_user');
-  loggedInUser='';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('appShell').style.display='none';
-  document.getElementById('bottomNav').style.display='none';
+  loggedInUser = '';
   document.getElementById('loginPass').value='';
   document.getElementById('loginError').textContent='';
 }
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 async function initApp(){
-  // Try loading from Firebase first
   const loaded = await loadFromFirebase();
-  if (!loaded) {
-    // fallback to localStorage cache
-    console.log('Using cached data');
-  }
+  if (!loaded) console.log('Using cached data');
   renderDashboard();
   updateDateBar();
   renderBatches();
@@ -656,13 +637,7 @@ async function initApp(){
   renderInquiries();
 }
 
-// auto-login if already logged in
-if(loggedInUser){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
-  document.getElementById('bottomNav').style.display='flex';
-  initApp();
-}
+// Auth state handled by onAuthStateChanged above
 
 // ── SCREEN ────────────────────────────────────────────
 function showScreen(name){
@@ -1475,6 +1450,44 @@ function addInquiry(){
   inquiries.unshift({id:nextId++,name,phone,sport:sp,session:se,status:'new',notes,date:today});
   saveAll();closeModal();renderInquiries();renderInqFilters();renderDashboard();
 }
+
+
+// ── EXPOSE FUNCTIONS TO WINDOW (required for module scope) ──
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.showScreen = showScreen;
+window.switchSession = switchSession;
+window.selectSport = selectSport;
+window.changeDate = changeDate;
+window.pickDate = pickDate;
+window.togglePresent = togglePresent;
+window.toggleExpand = toggleExpand;
+window.setComment = setComment;
+window.saveAttendance = saveAttendance;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.addStudent = addStudent;
+window.addInquiry = addInquiry;
+window.setProfileFilter = setProfileFilter;
+window.filterProfiles = filterProfiles;
+window.openProfileDetail = openProfileDetail;
+window.closeProfileDetail = closeProfileDetail;
+window.switchProfileTab = switchProfileTab;
+window.selectMonth = selectMonth;
+window.updatePerf = updatePerf;
+window.rateStar = rateStar;
+window.saveCoachNote = saveCoachNote;
+window.saveAllSkills = saveAllSkills;
+window.openRecordFee = openRecordFee;
+window.recordFeePayment = recordFeePayment;
+window.openEditFee = openEditFee;
+window.saveEditFee = saveEditFee;
+window.generateReportCard = generateReportCard;
+window.closeReportCard = closeReportCard;
+window.setInqFilter = setInqFilter;
+window.setInqStatus = setInqStatus;
+window.deleteInq = deleteInq;
+window.cycleFee = cycleFee;
 
 </script>
 </body>
