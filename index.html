@@ -610,9 +610,17 @@ async function doLogin(){
   document.getElementById('loginError').textContent = 'Signing in...';
   try {
     await signInWithEmailAndPassword(auth, email, pass);
-    // onAuthStateChanged will handle the rest
   } catch(e) {
-    document.getElementById('loginError').textContent = 'Incorrect email or password.';
+    console.error('Login error:', e.code, e.message);
+    const msg = {
+      'auth/invalid-email': 'Invalid email address.',
+      'auth/user-not-found': 'No account found with this email.',
+      'auth/wrong-password': 'Wrong password. Try again.',
+      'auth/invalid-credential': 'Wrong email or password.',
+      'auth/too-many-requests': 'Too many attempts. Try again later.',
+      'auth/network-request-failed': 'Network error. Check your connection.',
+    }[e.code] || 'Error: ' + e.code;
+    document.getElementById('loginError').textContent = msg;
   }
 }
 async function doLogout(){
