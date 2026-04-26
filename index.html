@@ -276,6 +276,7 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 </style>
 </head>
 <body>
+<input id="hiddenFocus" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;" />
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none!important;height:0;overflow:hidden;">
@@ -791,15 +792,15 @@ function showDoneBtn(id){
 }
 function doneComment(id){
   var el=document.getElementById('comment_'+id);
-  var btn=document.getElementById('done_'+id);
   if(el){
-    // Save without re-rendering
     var ws=getWS();
     var s=ws.find(function(x){return x.id===id;});
     if(s){s.comment=el.value;saveAttendance();}
+    // iOS keyboard dismiss - focus hidden input then blur it
+    var hf=document.getElementById('hiddenFocus');
+    if(hf){hf.focus();hf.blur();}
     el.blur();
   }
-  if(btn) btn.style.display='none';
 }
 function getLastComment(id){
   // Find last comment from attendance history for this student
