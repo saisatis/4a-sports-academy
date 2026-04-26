@@ -506,73 +506,73 @@ function renderBookings(){
   const onlineTotal=list.reduce((s,b)=>s+(b.online||0),0);
   const cashTotal=list.reduce((s,b)=>s+(b.cash||0),0);
   const unpaidList=list.filter(b=>!b.paid);
+  const partialCount=list.filter(b=>!b.paid&&b.balance>0&&b.balance<b.amount).length;
   const pending=list.reduce((s,b)=>s+(b.balance||0),0);
-  document.getElementById('bkStats').innerHTML=`
-    <div class="bk-stat"><div class="sum-val">${total}</div><div class="sum-label">Bookings</div></div>
-    <div class="bk-stat"><div class="sum-val" style="color:#111;">&#8377;${totalAmt.toLocaleString('en-IN')}</div><div class="sum-label">Total Amount</div></div>
-    <div class="bk-stat"><div class="sum-val" style="color:#2980b9;">&#8377;${onlineTotal.toLocaleString('en-IN')}</div><div class="sum-label">Online</div></div>
-    <div class="bk-stat"><div class="sum-val" style="color:#555;">&#8377;${cashTotal.toLocaleString('en-IN')}</div><div class="sum-label">Cash</div></div>
-    <div class="bk-stat"><div class="sum-val" style="color:#e74c3c;">${unpaidList.length}</div><div class="sum-label">Unpaid</div></div>
-    <div class="bk-stat"><div class="sum-val" style="color:#e67e22;">&#8377;${pending.toLocaleString('en-IN')}</div><div class="sum-label">Pending</div></div>
-  `;
-  // Group by date
-  const groups={};
-  list.forEach(bk=>{if(!groups[bk.date])groups[bk.date]=[];groups[bk.date].push(bk);});
-  let html='';
-  Object.keys(groups).sort().reverse().forEach(d=>{
-    const label=new Date(d).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-    html+=`<div style="font-size:11px;font-weight:700;color:#bbb;letter-spacing:.08em;text-transform:uppercase;padding:10px 2px 4px;">${label}</div>`;
-    groups[d].forEach(bk=>{
-      const initials=(bk.team||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-      html+=`<div class="bk-card">
-        <div class="bk-top" style="cursor:pointer;" onclick="toggleBkExpand(${bk.id})">
-          <div style="display:flex;align-items:center;gap:10px;flex:1;">
-            <div style="width:40px;height:40px;border-radius:50%;background:#f4f4f2;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#666;flex-shrink:0;">${initials}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                <div class="bk-name">${bk.team||'—'}</div>
-                ${bk.sport?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#f0f0ee;color:#666;">${bk.sport}</span>`:''}
-              </div>
-              <div class="bk-sport">${bk.timeSlot||''}${bk.hours?' · '+bk.hours:''}</div>
-              ${bk.phone?`<div style="font-size:12px;color:#2980b9;font-weight:600;margin-top:1px;">${bk.phone}</div>`:''}
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div class="bk-amount ${bk.paid?'':'unpaid'}">₹${Number(bk.amount).toLocaleString('en-IN')}</div>
-            <span class="bk-badge" style="background:${bk.paid?'#e8f5e9':'#fdecea'};color:${bk.paid?'#27ae60':'#e74c3c'};margin-top:4px;display:inline-block;">${bk.paid?'✓ Paid':'✗ Unpaid'}</span>
-          </div>
-        </div>
-        ${bkExpandedId===bk.id?`
-        <div style="padding:8px 14px 12px;border-top:1px solid #f5f5f5;margin-top:8px;">
-          ${!bk.paid?`
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
-            <div style="background:#f8f8f8;border-radius:10px;padding:8px;text-align:center;">
-              <div style="font-size:13px;font-weight:700;color:#111;">₹${Number(bk.amount).toLocaleString('en-IN')}</div>
-              <div style="font-size:9px;color:#bbb;margin-top:2px;font-weight:700;text-transform:uppercase;">Total</div>
-            </div>
-            <div style="background:#e8f5e9;border-radius:10px;padding:8px;text-align:center;">
-              <div style="font-size:13px;font-weight:700;color:#27ae60;">₹${((bk.online||0)+(bk.cash||0)).toLocaleString('en-IN')}</div>
-              <div style="font-size:9px;color:#27ae60;margin-top:2px;font-weight:700;text-transform:uppercase;">Paid</div>
-            </div>
-            <div style="background:#fdecea;border-radius:10px;padding:8px;text-align:center;">
-              <div style="font-size:13px;font-weight:700;color:#e74c3c;">₹${(bk.balance||0).toLocaleString('en-IN')}</div>
-              <div style="font-size:9px;color:#e74c3c;margin-top:2px;font-weight:700;text-transform:uppercase;">Balance</div>
-            </div>
-          </div>`:`
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-            ${bk.online>0?`<span class="bk-badge" style="background:#e8f0fe;color:#2980b9;">Online: ₹${bk.online.toLocaleString('en-IN')}</span>`:''}
-            ${bk.cash>0?`<span class="bk-badge" style="background:#f4f4f2;color:#555;">Cash: ₹${bk.cash.toLocaleString('en-IN')}</span>`:''}
-          </div>`}
-          ${bk.notes?`<div class="bk-notes">${bk.notes}</div>`:''}
-          <div class="bk-actions" style="margin-top:8px;">
-            ${bk.phone?`<a class="bk-phone" href="tel:${(bk.phone||'').replace(/[^0-9]/g,'')}">&#128222; ${bk.phone}</a>`:''}
-            ${!bk.paid?`<button class="bk-action-btn paid-btn" onclick="markBkPaid(${bk.id})">✓ Mark Paid</button>`:''}
-            <button class="bk-action-btn" onclick="editBk(${bk.id})">✏️ Edit</button>
-            <button class="bk-action-btn del-btn" onclick="deleteBk(${bk.id})">Delete</button>
-          </div>
-        </div>`:''
+  document.getElementById('bkStats').innerHTML=
+    '<div class="bk-stat"><div class="sum-val">'+total+'</div><div class="sum-label">Bookings</div></div>'+
+    '<div class="bk-stat"><div class="sum-val" style="color:#111;">&#8377;'+totalAmt.toLocaleString('en-IN')+'</div><div class="sum-label">Total</div></div>'+
+    '<div class="bk-stat"><div class="sum-val" style="color:#2980b9;">&#8377;'+onlineTotal.toLocaleString('en-IN')+'</div><div class="sum-label">Online</div></div>'+
+    '<div class="bk-stat"><div class="sum-val" style="color:#555;">&#8377;'+cashTotal.toLocaleString('en-IN')+'</div><div class="sum-label">Cash</div></div>'+
+    '<div class="bk-stat"><div class="sum-val" style="color:#e67e22;">'+partialCount+'</div><div class="sum-label">Partial</div></div>'+
+    '<div class="bk-stat"><div class="sum-val" style="color:#e74c3c;">&#8377;'+pending.toLocaleString('en-IN')+'</div><div class="sum-label">Pending</div></div>';
+
+  var groups={};
+  list.forEach(function(bk){ if(!groups[bk.date])groups[bk.date]=[]; groups[bk.date].push(bk); });
+  var html='';
+  Object.keys(groups).sort().reverse().forEach(function(d){
+    var dt=new Date(d+'T00:00:00');
+    var label=dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+    html+='<div style="font-size:10px;font-weight:700;color:#bbb;letter-spacing:.1em;padding:10px 2px 4px;">'+label+'</div>';
+    groups[d].forEach(function(bk){
+      var ini=(bk.team||'?').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
+      var amtPaid=(bk.online||0)+(bk.cash||0);
+      var isPartial=!bk.paid&&(bk.balance||0)>0&&(bk.balance||0)<bk.amount;
+      var isUnpaid=!bk.paid&&!isPartial;
+      var statusColor=bk.paid?'#27ae60':isPartial?'#e67e22':'#e74c3c';
+      var statusText=bk.paid?'&#10003; Paid':isPartial?'&#9888; Partial &#8377;'+(bk.balance||0).toLocaleString('en-IN'):'&#10007; Unpaid';
+      var isOpen=(bkExpandedId===bk.id);
+
+      html+='<div class="bk-card">';
+      html+='<div style="display:flex;align-items:center;padding:12px 14px;gap:10px;cursor:pointer;" onclick="toggleBkExpand('+bk.id+')">';
+      html+='<div style="width:38px;height:38px;border-radius:50%;background:#f4f4f2;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#666;flex-shrink:0;">'+ini+'</div>';
+      html+='<div style="flex:1;min-width:0;">';
+      html+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
+      html+='<div style="font-size:15px;font-weight:600;color:#111;">'+(bk.team||'&#8212;')+'</div>';
+      if(bk.sport) html+='<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#f0f0ee;color:#666;">'+bk.sport+'</span>';
+      html+='</div>';
+      html+='<div style="font-size:12px;color:#aaa;margin-top:2px;">'+(bk.timeSlot||'')+(bk.hours?' &middot; '+bk.hours:'')+'</div>';
+      if(bk.phone) html+='<div style="font-size:12px;color:#2980b9;margin-top:1px;font-weight:600;">'+bk.phone+'</div>';
+      html+='</div>';
+      html+='<div style="text-align:right;flex-shrink:0;">';
+      html+='<div style="font-size:15px;font-weight:700;color:'+statusColor+';">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+'</div>';
+      html+='<div style="font-size:11px;font-weight:600;color:'+statusColor+';margin-top:2px;">'+statusText+'</div>';
+      html+='</div></div>';
+
+      if(isOpen){
+        html+='<div style="padding:0 14px 12px;border-top:1px solid #f5f5f5;">';
+        if(bk.paid){
+          html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;">';
+          if(bk.online>0) html+='<span class="bk-badge" style="background:#e8f0fe;color:#2980b9;">Online: &#8377;'+bk.online.toLocaleString('en-IN')+'</span>';
+          if(bk.cash>0) html+='<span class="bk-badge" style="background:#f4f4f2;color:#555;">Cash: &#8377;'+bk.cash.toLocaleString('en-IN')+'</span>';
+          html+='</div>';
+        } else if(isPartial){
+          html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0;">';
+          html+='<div style="background:#f8f8f8;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#111;">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#bbb;margin-top:2px;font-weight:700;text-transform:uppercase;">Total</div></div>';
+          html+='<div style="background:#e8f5e9;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#27ae60;">&#8377;'+amtPaid.toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#27ae60;margin-top:2px;font-weight:700;text-transform:uppercase;">Paid</div></div>';
+          html+='<div style="background:#fff3e0;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#e67e22;">&#8377;'+(bk.balance||0).toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#e67e22;margin-top:2px;font-weight:700;text-transform:uppercase;">Balance</div></div>';
+          html+='</div>';
+        } else {
+          html+='<div style="background:#fdecea;border-radius:10px;padding:10px;margin:10px 0;text-align:center;"><div style="font-size:14px;font-weight:700;color:#e74c3c;">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+' &#8212; Full Amount Unpaid</div></div>';
         }
-      </div>`;
+        if(bk.notes) html+='<div style="font-size:12px;color:#aaa;margin-bottom:8px;line-height:1.5;">'+bk.notes+'</div>';
+        html+='<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+        if(bk.phone) html+='<a class="bk-action-btn" href="tel:'+bk.phone.replace(/[^0-9]/g,'')+'" style="color:#2980b9;border-color:#e8f0fe;background:#e8f0fe;text-decoration:none;">&#128222; Call</a>';
+        if(!bk.paid) html+='<button class="bk-action-btn paid-btn" onclick="markBkPaid('+bk.id+')">&#10003; Mark Paid</button>';
+        html+='<button class="bk-action-btn" onclick="editBk('+bk.id+')">&#9998; Edit</button>';
+        html+='<button class="bk-action-btn del-btn" onclick="deleteBk('+bk.id+')">Delete</button>';
+        html+='</div></div>';
+      }
+      html+='</div>';
     });
   });
   document.getElementById('bookingList').innerHTML=html||'<div style="text-align:center;padding:2rem;color:#bbb;font-size:14px;">No bookings found.</div>';
@@ -639,8 +639,7 @@ async function doLogin(){
 async function doLogout(){await signOut(auth);localStorage.removeItem('aca_user');loggedInUser='';}
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
-async function initApp(){
-  await loadFromFirebase();
+function initApp(){
   renderDashboard();updateDateDisplay();renderSportChips();renderStudents();
   renderProfileFilters();renderProfiles();renderBkMonthFilter();renderBookings();renderInqFilters();renderInquiries();
 }
