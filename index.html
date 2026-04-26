@@ -6,7 +6,7 @@
 <title>4A Sports Academy</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EFEFEF;color:#111;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EFEFEF;color:#111;-webkit-tap-highlight-color:transparent;overflow-x:hidden;}
 
 /* LOGIN */
 #loginScreen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
@@ -30,7 +30,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .nav-icon{font-size:22px;line-height:1;}
 
 /* PAGE HEADER */
-.pg-header{background:#fff;padding:14px 16px 12px;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;}
+.pg-header{background:#fff;padding:8px 16px 10px;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;}
 .pg-label{font-size:10px;font-weight:700;color:#bbb;letter-spacing:0.12em;text-transform:uppercase;}
 .pg-title{font-size:24px;font-weight:700;color:#111;margin-top:2px;}
 .pg-header-row{display:flex;justify-content:space-between;align-items:flex-end;}
@@ -217,10 +217,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 
 /* BOOKINGS */
-.bk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px;}
-.bk-stat{background:#fff;border-radius:14px;padding:14px;border:1px solid #eee;}
-.bk-stat .sum-val{font-size:22px;font-weight:700;color:#111;}
-.bk-stat .sum-label{font-size:10px;color:#bbb;margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
+.bk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:8px 12px;}
+.bk-stat{background:#fff;border-radius:10px;padding:8px 6px;border:1px solid #eee;}
+.bk-stat .sum-val{font-size:14px;font-weight:700;color:#111;}
+.bk-stat .sum-label{font-size:9px;color:#bbb;margin-top:1px;font-weight:600;text-transform:uppercase;letter-spacing:0.02em;}
 .bk-card{background:#fff;border:1px solid #eee;border-radius:16px;margin-bottom:8px;padding:14px;}
 .bk-top{display:flex;justify-content:space-between;align-items:flex-start;}
 .bk-name{font-size:15px;font-weight:600;color:#111;}
@@ -614,8 +614,12 @@ function renderBookings(){
           <div style="display:flex;align-items:center;gap:10px;flex:1;">
             <div style="width:40px;height:40px;border-radius:50%;background:#f4f4f2;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#666;flex-shrink:0;">${initials}</div>
             <div style="flex:1;min-width:0;">
-              <div class="bk-name">${bk.team||'—'}</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <div class="bk-name">${bk.team||'—'}</div>
+                ${bk.sport?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#f0f0ee;color:#666;">${bk.sport}</span>`:''}
+              </div>
               <div class="bk-sport">${bk.timeSlot||''}${bk.hours?' · '+bk.hours:''}</div>
+              ${bk.phone?`<div style="font-size:12px;color:#2980b9;font-weight:600;margin-top:1px;">${bk.phone}</div>`:''}
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
@@ -625,11 +629,25 @@ function renderBookings(){
         </div>
         ${bkExpandedId===bk.id?`
         <div style="padding:8px 14px 12px;border-top:1px solid #f5f5f5;margin-top:8px;">
-          <div class="bk-mid" style="margin-top:0;margin-bottom:6px;">
+          ${!bk.paid?`
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+            <div style="background:#f8f8f8;border-radius:10px;padding:8px;text-align:center;">
+              <div style="font-size:13px;font-weight:700;color:#111;">₹${Number(bk.amount).toLocaleString('en-IN')}</div>
+              <div style="font-size:9px;color:#bbb;margin-top:2px;font-weight:700;text-transform:uppercase;">Total</div>
+            </div>
+            <div style="background:#e8f5e9;border-radius:10px;padding:8px;text-align:center;">
+              <div style="font-size:13px;font-weight:700;color:#27ae60;">₹${((bk.online||0)+(bk.cash||0)).toLocaleString('en-IN')}</div>
+              <div style="font-size:9px;color:#27ae60;margin-top:2px;font-weight:700;text-transform:uppercase;">Paid</div>
+            </div>
+            <div style="background:#fdecea;border-radius:10px;padding:8px;text-align:center;">
+              <div style="font-size:13px;font-weight:700;color:#e74c3c;">₹${(bk.balance||0).toLocaleString('en-IN')}</div>
+              <div style="font-size:9px;color:#e74c3c;margin-top:2px;font-weight:700;text-transform:uppercase;">Balance</div>
+            </div>
+          </div>`:`
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
             ${bk.online>0?`<span class="bk-badge" style="background:#e8f0fe;color:#2980b9;">Online: ₹${bk.online.toLocaleString('en-IN')}</span>`:''}
             ${bk.cash>0?`<span class="bk-badge" style="background:#f4f4f2;color:#555;">Cash: ₹${bk.cash.toLocaleString('en-IN')}</span>`:''}
-            ${bk.balance>0?`<span class="bk-badge" style="background:#fdecea;color:#e74c3c;">Balance: ₹${bk.balance.toLocaleString('en-IN')}</span>`:''}
-          </div>
+          </div>`}
           ${bk.notes?`<div class="bk-notes">${bk.notes}</div>`:''}
           <div class="bk-actions" style="margin-top:8px;">
             ${bk.phone?`<a class="bk-phone" href="tel:${(bk.phone||'').replace(/[^0-9]/g,'')}">&#128222; ${bk.phone}</a>`:''}
