@@ -216,8 +216,7 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 .rc-close-btn{margin:0 16px;width:calc(100% - 32px);padding:14px;background:#111;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
 
 
-/* DONE BUTTON */
-.comment-done-btn{display:none;padding:9px 14px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;}
+
 /* BOOKINGS */
 .bk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:8px 12px;}
 .bk-stat{background:#fff;border-radius:10px;padding:8px 6px;border:1px solid #eee;}
@@ -761,8 +760,8 @@ function renderStudents(){
     if(!p){
       var lastComment=getLastComment(st.id);
       html+='<div style="padding:0 14px 12px;display:flex;gap:8px;align-items:center;">';
-      html+='<input type="text" id="comment_'+st.id+'" placeholder="'+(lastComment?lastComment:'Reason for absence (optional)')+'" value="'+(st.comment||'')+'" onchange="setComment('+st.id+',this.value)" onfocus="showDoneBtn('+st.id+')" style="flex:1;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
-      html+='<button id="done_'+st.id+'" onclick="doneComment('+st.id+')" class="comment-done-btn">Done</button>';
+      html+='<input type="text" id="comment_'+st.id+'" placeholder="'+(lastComment?lastComment:'Reason for absence (optional)')+'" value="'+(st.comment||'')+'" enterkeyhint="done" onblur="doneComment('+st.id+')" style="flex:1;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
+      
       html+='</div>';
     }
     html+='</div>';
@@ -794,7 +793,10 @@ function doneComment(id){
   var el=document.getElementById('comment_'+id);
   var btn=document.getElementById('done_'+id);
   if(el){
-    setComment(id,el.value);
+    // Save without re-rendering
+    var ws=getWS();
+    var s=ws.find(function(x){return x.id===id;});
+    if(s){s.comment=el.value;saveAttendance();}
     el.blur();
   }
   if(btn) btn.style.display='none';
