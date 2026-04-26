@@ -6,10 +6,10 @@
 <title>4A Sports Academy</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EFEFEF;color:#111;-webkit-tap-highlight-color:transparent;overflow-x:hidden;}
+html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EFEFEF;color:#111;-webkit-tap-highlight-color:transparent;overflow-x:hidden;margin:0;padding:0;}
 
 /* LOGIN */
-#loginScreen{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
+#loginScreen{display:none!important;position:fixed;inset:0;background:#fff;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
 .login-logo{width:72px;height:72px;background:#111;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:1.5rem;}
 .login-title{font-size:26px;font-weight:700;color:#111;margin-bottom:4px;}
 .login-sub{font-size:14px;color:#bbb;margin-bottom:2rem;}
@@ -19,12 +19,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .login-error{font-size:13px;color:#e74c3c;margin-top:10px;min-height:18px;text-align:center;}
 
 /* APP SHELL */
-#appShell{display:none;padding-bottom:72px;}
+#appShell{display:block;padding-bottom:72px;}
 .screen{display:none;}
 .screen.active{display:block;}
 
 /* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:none;z-index:50;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;z-index:50;}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;cursor:pointer;color:#ccc;font-size:10px;font-weight:600;gap:3px;border:none;background:none;letter-spacing:0.02em;}
 .nav-item.active{color:#111;}
 .nav-icon{font-size:22px;line-height:1;}
@@ -277,7 +277,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen">
+<div id="loginScreen" style="display:none!important;height:0;overflow:hidden;">
   <div class="login-logo">🏆</div>
   <div class="login-title">4A Sports Academy</div>
   <div class="login-sub">Admin Portal</div>
@@ -290,80 +290,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <!-- APP -->
 <div id="appShell">
 
-  <!-- DASHBOARD -->
-  <div class="screen active" id="screen-dashboard">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-header-row">
-        <div class="pg-title" id="dashGreeting">Dashboard</div>
-        <button class="sign-out-btn" onclick="doLogout()">Sign out</button>
-      </div>
-    </div>
-    <div id="dashContent"></div>
-  </div>
-
-  <!-- ATTENDANCE -->
-  <div class="screen" id="screen-attendance">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-title">Attendance</div>
-      <div class="date-nav">
-        <button class="date-nav-btn" onclick="changeDate(-1)">&#8249;</button>
-        <div id="dateLabel"></div>
-        <button class="date-nav-btn" id="nextDateBtn" onclick="changeDate(1)">&#8250;</button>
-      </div>
-    </div>
-    <div class="sess-tabs">
-      <div class="sess-tab active" onclick="switchSession('morning',this)">&#9728; Morning</div>
-      <div class="sess-tab" onclick="switchSession('evening',this)">&#127748; Evening</div>
-    </div>
-    <div class="sport-chips" id="sportChips"></div>
-    <div class="summary-grid">
-      <div class="sum-card total"><div class="sum-val" id="totalCount">0</div><div class="sum-label">Total</div></div>
-      <div class="sum-card present"><div class="sum-val" id="presentCount">0</div><div class="sum-label">Present</div></div>
-      <div class="sum-card absent"><div class="sum-val" id="absentCount">0</div><div class="sum-label">Absent</div></div>
-    </div>
-    <div class="list-area" id="studentList"></div>
-    <div class="save-bar">
-      <span class="saved-msg" id="savedBadge"></span>
-      <button class="save-btn" onclick="saveAttendance()">Save</button>
-    </div>
-  </div>
-
-  <!-- PROFILES -->
-  <div class="screen" id="screen-profiles">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-header-row">
-        <div class="pg-title">Profiles</div>
-        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
-      </div>
-    </div>
-    <div class="search-bar">
-      <input class="search-input" placeholder="Search student or parent..." oninput="filterProfiles(this.value)" id="profileSearch"/>
-    </div>
-    <div class="filter-row" id="profileFilters"></div>
-    <div class="profile-list" id="profileList"></div>
-  </div>
-
-  <!-- INQUIRIES -->
-  <div class="screen" id="screen-inquiries">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-header-row">
-        <div class="pg-title">Inquiries</div>
-        <button class="add-hdr-btn" onclick="openModal('addInquiry')">+ Add</button>
-      </div>
-    </div>
-    <div class="filter-row" id="inqFilters" style="padding:10px 16px;"></div>
-    <div class="inq-list" id="inquiryList"></div>
-  </div>
-
-</div>
-
-
   <!-- BOOKINGS -->
-  <div class="screen" id="screen-bookings">
+  <div class="screen active" id="screen-bookings">
     <div class="pg-header">
       <div class="pg-label">4A Sports Academy</div>
       <div class="pg-header-row">
@@ -377,11 +305,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 
 <!-- BOTTOM NAV -->
-<div class="bottom-nav" id="bottomNav" style="display:none;">
-  <button class="nav-item active" id="nav-dashboard" onclick="showScreen('dashboard')"><span class="nav-icon">&#8962;</span>Home</button>
+<div class="bottom-nav" id="bottomNav" style="display:flex;">
+  <button class="nav-item" id="nav-dashboard" onclick="showScreen('dashboard')"><span class="nav-icon">&#8962;</span>Home</button>
   <button class="nav-item" id="nav-attendance" onclick="showScreen('attendance')"><span class="nav-icon">&#10003;</span>Attend</button>
   <button class="nav-item" id="nav-profiles" onclick="showScreen('profiles')"><span class="nav-icon">&#128100;</span>Profiles</button>
-  <button class="nav-item" id="nav-bookings" onclick="showScreen('bookings')"><span class="nav-icon">&#128197;</span>Bookings</button>
+  <button class="nav-item active" id="nav-bookings" onclick="showScreen('bookings')"><span class="nav-icon">&#128197;</span>Bookings</button>
   <button class="nav-item" id="nav-inquiries" onclick="showScreen('inquiries')"><span class="nav-icon">&#128203;</span>Inquiries</button>
 </div>
 
@@ -454,20 +382,7 @@ function showLoader(msg){
 }
 function hideLoader(){ const el=document.getElementById('globalLoader'); if(el)el.style.display='none'; }
 
-onAuthStateChanged(auth, async(user)=>{
-  if(user){
-    loggedInUser=user.email.split('@')[0];
-    localStorage.setItem('aca_user',loggedInUser);
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('appShell').style.display='block';
-    document.getElementById('bottomNav').style.display='flex';
-    await initApp();
-  } else {
-    document.getElementById('loginScreen').style.display='flex';
-    document.getElementById('appShell').style.display='none';
-    document.getElementById('bottomNav').style.display='none';
-  }
-});
+
 
 // ── CONSTANTS ──────────────────────────────────────────
 const QUOTES=['Champions train, losers complain.','Push yourself because no one else will.','Great things never come from comfort zones.','The harder you work, the luckier you get.','Don\'t stop when tired. Stop when done.','Dream it. Wish it. Do it.','Every day is a chance to be better.','Work hard in silence, let success make the noise.','Fall seven times, stand up eight.','Earn it.','Sweat now, shine later.','Your only limit is you.'];
@@ -1174,6 +1089,9 @@ function saveEditFee(id,sess,sp){
 }
 
 // ── EXPOSE TO WINDOW ───────────────────────────────────
+// Auto init
+loggedInUser = localStorage.getItem('aca_user')||'admin';
+document.addEventListener('DOMContentLoaded', function(){ initApp(); });
 window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
 window.changeDate=changeDate; window.togglePresent=togglePresent;
@@ -1193,3 +1111,76 @@ window.setInqFilter=setInqFilter; window.setInqStatus=setInqStatus; window.delet
 </script>
 </body>
 </html>
+
+  <!-- DASHBOARD -->
+  <div class="screen" id="screen-dashboard">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title" id="dashGreeting">Dashboard</div>
+        <button class="sign-out-btn" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+    <div id="dashContent"></div>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div class="screen" id="screen-attendance">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-title">Attendance</div>
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="changeDate(-1)">&#8249;</button>
+        <div id="dateLabel"></div>
+        <button class="date-nav-btn" id="nextDateBtn" onclick="changeDate(1)">&#8250;</button>
+      </div>
+    </div>
+    <div class="sess-tabs">
+      <div class="sess-tab active" onclick="switchSession('morning',this)">&#9728; Morning</div>
+      <div class="sess-tab" onclick="switchSession('evening',this)">&#127748; Evening</div>
+    </div>
+    <div class="sport-chips" id="sportChips"></div>
+    <div class="summary-grid">
+      <div class="sum-card total"><div class="sum-val" id="totalCount">0</div><div class="sum-label">Total</div></div>
+      <div class="sum-card present"><div class="sum-val" id="presentCount">0</div><div class="sum-label">Present</div></div>
+      <div class="sum-card absent"><div class="sum-val" id="absentCount">0</div><div class="sum-label">Absent</div></div>
+    </div>
+    <div class="list-area" id="studentList"></div>
+    <div class="save-bar">
+      <span class="saved-msg" id="savedBadge"></span>
+      <button class="save-btn" onclick="saveAttendance()">Save</button>
+    </div>
+  </div>
+
+  <!-- PROFILES -->
+  <div class="screen" id="screen-profiles">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Profiles</div>
+        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" placeholder="Search student or parent..." oninput="filterProfiles(this.value)" id="profileSearch"/>
+    </div>
+    <div class="filter-row" id="profileFilters"></div>
+    <div class="profile-list" id="profileList"></div>
+  </div>
+
+  <!-- INQUIRIES -->
+  <div class="screen" id="screen-inquiries">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Inquiries</div>
+        <button class="add-hdr-btn" onclick="openModal('addInquiry')">+ Add</button>
+      </div>
+    </div>
+    <div class="filter-row" id="inqFilters" style="padding:10px 16px;"></div>
+    <div class="inq-list" id="inquiryList"></div>
+  </div>
+
+</div>
+
+
