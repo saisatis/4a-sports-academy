@@ -276,7 +276,6 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 </style>
 </head>
 <body>
-<input id="hiddenFocus" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;" />
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none!important;height:0;overflow:hidden;">
@@ -761,7 +760,7 @@ function renderStudents(){
     if(!p){
       var lastComment=getLastComment(st.id);
       html+='<div style="padding:0 14px 12px;display:flex;gap:8px;align-items:center;">';
-      html+='<input type="text" id="comment_'+st.id+'" placeholder="'+(lastComment?lastComment:'Reason for absence (optional)')+'" value="'+(st.comment||'')+'" enterkeyhint="done" onblur="doneComment('+st.id+')" style="flex:1;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
+      html+='<input type="text" id="comment_'+st.id+'" placeholder="'+(lastComment?lastComment:'Reason for absence (optional)')+'" value="'+(st.comment||'')+'" onblur="doneComment('+st.id+')" style="flex:1;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
       
       html+='</div>';
     }
@@ -796,9 +795,6 @@ function doneComment(id){
     var ws=getWS();
     var s=ws.find(function(x){return x.id===id;});
     if(s){s.comment=el.value;saveAttendance();}
-    // iOS keyboard dismiss - focus hidden input then blur it
-    var hf=document.getElementById('hiddenFocus');
-    if(hf){hf.focus();hf.blur();}
     el.blur();
   }
 }
