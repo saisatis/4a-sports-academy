@@ -499,15 +499,14 @@ function renderBkMonthFilter(){
 function setBkMonth(m){bkMonthFilter=m;renderBkMonthFilter();renderBookings();}
 
 function renderBookings(){
-  let list=bkMonthFilter==='all'?[...bookings]:bookings.filter(b=>b.date&&b.date.startsWith(bkMonthFilter));
-  list.sort((a,b)=>b.date.localeCompare(a.date));
-  const total=list.length;
-  const totalAmt=list.reduce((s,b)=>s+b.amount,0);
-  const onlineTotal=list.reduce((s,b)=>s+(b.online||0),0);
-  const cashTotal=list.reduce((s,b)=>s+(b.cash||0),0);
-  const unpaidList=list.filter(b=>!b.paid);
-  const partialCount=list.filter(b=>!b.paid&&b.balance>0&&b.balance<b.amount).length;
-  const pending=list.reduce((s,b)=>s+(b.balance||0),0);
+  var list=bkMonthFilter==='all'?[].concat(bookings):bookings.filter(function(b){return b.date&&b.date.startsWith(bkMonthFilter);});
+  list.sort(function(a,b){return b.date.localeCompare(a.date);});
+  var total=list.length;
+  var totalAmt=list.reduce(function(s,b){return s+b.amount;},0);
+  var onlineTotal=list.reduce(function(s,b){return s+(b.online||0);},0);
+  var cashTotal=list.reduce(function(s,b){return s+(b.cash||0);},0);
+  var partialCount=list.filter(function(b){return !b.paid&&(b.balance||0)>0&&(b.balance||0)<b.amount;}).length;
+  var pending=list.reduce(function(s,b){return s+(b.balance||0);},0);
   document.getElementById('bkStats').innerHTML=
     '<div class="bk-stat"><div class="sum-val">'+total+'</div><div class="sum-label">Bookings</div></div>'+
     '<div class="bk-stat"><div class="sum-val" style="color:#111;">&#8377;'+totalAmt.toLocaleString('en-IN')+'</div><div class="sum-label">Total</div></div>'+
@@ -515,9 +514,8 @@ function renderBookings(){
     '<div class="bk-stat"><div class="sum-val" style="color:#555;">&#8377;'+cashTotal.toLocaleString('en-IN')+'</div><div class="sum-label">Cash</div></div>'+
     '<div class="bk-stat"><div class="sum-val" style="color:#e67e22;">'+partialCount+'</div><div class="sum-label">Partial</div></div>'+
     '<div class="bk-stat"><div class="sum-val" style="color:#e74c3c;">&#8377;'+pending.toLocaleString('en-IN')+'</div><div class="sum-label">Pending</div></div>';
-
   var groups={};
-  list.forEach(function(bk){ if(!groups[bk.date])groups[bk.date]=[]; groups[bk.date].push(bk); });
+  list.forEach(function(bk){if(!groups[bk.date])groups[bk.date]=[];groups[bk.date].push(bk);});
   var html='';
   Object.keys(groups).sort().reverse().forEach(function(d){
     var dt=new Date(d+'T00:00:00');
@@ -527,27 +525,21 @@ function renderBookings(){
       var ini=(bk.team||'?').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
       var amtPaid=(bk.online||0)+(bk.cash||0);
       var isPartial=!bk.paid&&(bk.balance||0)>0&&(bk.balance||0)<bk.amount;
-      var isUnpaid=!bk.paid&&!isPartial;
       var statusColor=bk.paid?'#27ae60':isPartial?'#e67e22':'#e74c3c';
       var statusText=bk.paid?'&#10003; Paid':isPartial?'&#9888; Partial &#8377;'+(bk.balance||0).toLocaleString('en-IN'):'&#10007; Unpaid';
       var isOpen=(bkExpandedId===bk.id);
-
       html+='<div class="bk-card">';
       html+='<div style="display:flex;align-items:center;padding:12px 14px;gap:10px;cursor:pointer;" onclick="toggleBkExpand('+bk.id+')">';
       html+='<div style="width:38px;height:38px;border-radius:50%;background:#f4f4f2;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#666;flex-shrink:0;">'+ini+'</div>';
       html+='<div style="flex:1;min-width:0;">';
-      html+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">';
-      html+='<div style="font-size:15px;font-weight:600;color:#111;">'+(bk.team||'&#8212;')+'</div>';
+      html+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><div style="font-size:15px;font-weight:600;color:#111;">'+(bk.team||'&#8212;')+'</div>';
       if(bk.sport) html+='<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#f0f0ee;color:#666;">'+bk.sport+'</span>';
-      html+='</div>';
-      html+='<div style="font-size:12px;color:#aaa;margin-top:2px;">'+(bk.timeSlot||'')+(bk.hours?' &middot; '+bk.hours:'')+'</div>';
+      html+='</div><div style="font-size:12px;color:#aaa;margin-top:2px;">'+(bk.timeSlot||'')+(bk.hours?' &middot; '+bk.hours:'')+'</div>';
       if(bk.phone) html+='<div style="font-size:12px;color:#2980b9;margin-top:1px;font-weight:600;">'+bk.phone+'</div>';
-      html+='</div>';
-      html+='<div style="text-align:right;flex-shrink:0;">';
+      html+='</div><div style="text-align:right;flex-shrink:0;">';
       html+='<div style="font-size:15px;font-weight:700;color:'+statusColor+';">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+'</div>';
       html+='<div style="font-size:11px;font-weight:600;color:'+statusColor+';margin-top:2px;">'+statusText+'</div>';
       html+='</div></div>';
-
       if(isOpen){
         html+='<div style="padding:0 14px 12px;border-top:1px solid #f5f5f5;">';
         if(bk.paid){
@@ -557,12 +549,12 @@ function renderBookings(){
           html+='</div>';
         } else if(isPartial){
           html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0;">';
-          html+='<div style="background:#f8f8f8;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#111;">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#bbb;margin-top:2px;font-weight:700;text-transform:uppercase;">Total</div></div>';
-          html+='<div style="background:#e8f5e9;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#27ae60;">&#8377;'+amtPaid.toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#27ae60;margin-top:2px;font-weight:700;text-transform:uppercase;">Paid</div></div>';
-          html+='<div style="background:#fff3e0;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#e67e22;">&#8377;'+(bk.balance||0).toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#e67e22;margin-top:2px;font-weight:700;text-transform:uppercase;">Balance</div></div>';
+          html+='<div style="background:#f8f8f8;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#111;">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#bbb;font-weight:700;text-transform:uppercase;">Total</div></div>';
+          html+='<div style="background:#e8f5e9;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#27ae60;">&#8377;'+amtPaid.toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#27ae60;font-weight:700;text-transform:uppercase;">Paid</div></div>';
+          html+='<div style="background:#fff3e0;border-radius:10px;padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#e67e22;">&#8377;'+(bk.balance||0).toLocaleString('en-IN')+'</div><div style="font-size:9px;color:#e67e22;font-weight:700;text-transform:uppercase;">Balance</div></div>';
           html+='</div>';
         } else {
-          html+='<div style="background:#fdecea;border-radius:10px;padding:10px;margin:10px 0;text-align:center;"><div style="font-size:14px;font-weight:700;color:#e74c3c;">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+' &#8212; Full Amount Unpaid</div></div>';
+          html+='<div style="background:#fdecea;border-radius:10px;padding:10px;margin:10px 0;text-align:center;"><div style="font-size:14px;font-weight:700;color:#e74c3c;">&#8377;'+Number(bk.amount).toLocaleString('en-IN')+' &#8212; Unpaid</div></div>';
         }
         if(bk.notes) html+='<div style="font-size:12px;color:#aaa;margin-bottom:8px;line-height:1.5;">'+bk.notes+'</div>';
         html+='<div style="display:flex;gap:6px;flex-wrap:wrap;">';
@@ -981,19 +973,28 @@ function openModal(type){
     document.getElementById('newSport').value=sport;document.getElementById('newSession').value=session;
   }
   if(type==='addBooking'){
-    const today=new Date().toISOString().slice(0,10);
-    showModal(`<div class="modal-handle"></div><div class="modal-title">New Booking</div>
-      <div class="field-label">Team / Name</div><input type="text" id="bkTeam" placeholder="e.g. NT Raja"/>
-      <div class="field-label">Phone</div><input type="tel" id="bkPhone" placeholder="e.g. 9876543210"/>
-      <div class="field-label">Date</div><input type="date" id="bkDate" value="${today}"/>
-      <div class="field-label">Time Slot</div><input type="text" id="bkTimeSlot" placeholder="e.g. 8PM to 10PM"/>
-      <div class="field-label">Duration</div><input type="text" id="bkHours" placeholder="e.g. 2 Hours"/>
-      <div class="field-label">Total Amount (₹)</div><input type="number" id="bkAmount" placeholder="e.g. 1600"/>
-      <div class="field-label">Online Amount (₹)</div><input type="number" id="bkOnline" placeholder="0"/>
-      <div class="field-label">Cash Amount (₹)</div><input type="number" id="bkCash" placeholder="0"/>
-      <div class="field-label">Payment Status</div><select id="bkPaid"><option value="false">Unpaid</option><option value="true">Paid</option></select>
-      <div class="field-label">Notes</div><textarea id="bkNotes" placeholder="Any notes..."></textarea>
-      <div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="addBooking()">Save Booking</button></div>`);
+    var today=new Date().toISOString().slice(0,10);
+    var h='';
+    h+='<div class="modal-handle"></div><div class="modal-title">New Booking</div>';
+    h+='<div class="field-label">Team / Name</div><input type="text" id="bkTeam" placeholder="e.g. NT Raja"/>';
+    h+='<div class="field-label">Phone</div><input type="tel" id="bkPhone" placeholder="e.g. 9876543210"/>';
+    h+='<div class="field-label">Date</div><input type="date" id="bkDate" value="'+today+'"/>';
+    h+='<div class="field-label">Sport</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;" id="sportIcons">';
+    var sp=[['Football','&#9917;'],['Cricket','&#127992;'],['Basketball','&#127944;'],['Pickleball','&#127955;'],['Nets','&#127999;'],['Other','&#127934;']];
+    for(var si=0;si<sp.length;si++){h+='<div onclick="selectBkSport(this,&quot;'+sp[si][0]+'&quot;)" style="text-align:center;padding:10px 4px;border:2px solid #eee;border-radius:12px;cursor:pointer;font-size:11px;font-weight:600;color:#aaa;"><div style="font-size:22px;margin-bottom:3px;">'+sp[si][1]+'</div>'+sp[si][0]+'</div>';}
+    h+='</div><input type="hidden" id="bkSport" value=""/>';
+    h+='<div class="field-label">Time Slot</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">';
+    h+='<select id="bkStartTime" onchange="calcDuration()" style="padding:12px;border:1.5px solid #eee;border-radius:12px;font-size:14px;font-family:inherit;background:#fafafa;">'+buildTimeOptions()+'</select>';
+    h+='<select id="bkEndTime" onchange="calcDuration()" style="padding:12px;border:1.5px solid #eee;border-radius:12px;font-size:14px;font-family:inherit;background:#fafafa;">'+buildTimeOptions()+'</select>';
+    h+='</div><div style="display:flex;justify-content:space-between;font-size:11px;color:#bbb;margin-bottom:12px;"><span>Start Time</span><span>End Time</span></div>';
+    h+='<div class="field-label">Duration</div><input type="text" id="bkHours" placeholder="Auto-calculated" readonly style="background:#f4f4f2;color:#555;"/>';
+    h+='<div class="field-label">Total Amount (&#8377;)</div><input type="number" id="bkAmount" placeholder="e.g. 1600"/>';
+    h+='<div class="field-label">Payment Status</div><select id="bkPaid" onchange="onBkPaymentChange()" style="margin-bottom:14px;"><option value="unpaid">&#10007; Unpaid</option><option value="paid">&#10003; Paid</option><option value="partial">&#9888; Partial</option></select>';
+    h+='<div id="bkPaidFields" style="display:none;"><div class="field-label">Online Amount (&#8377;)</div><input type="number" id="bkOnline" placeholder="0"/><div class="field-label">Cash Amount (&#8377;)</div><input type="number" id="bkCash" placeholder="0"/></div>';
+    h+='<div id="bkPartialFields" style="display:none;"><div class="field-label">Amount Paid (&#8377;)</div><input type="number" id="bkAmtPaid" placeholder="e.g. 800" oninput="calcBalance()"/><div id="bkBalanceShow" style="background:#fff3e0;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:none;"><div style="font-size:11px;color:#e67e22;font-weight:700;text-transform:uppercase;">Balance Remaining</div><div id="bkBalanceAmt" style="font-size:18px;font-weight:700;color:#e67e22;">&#8377;0</div></div></div>';
+    h+='<div class="field-label">Notes</div><textarea id="bkNotes" placeholder="Any notes..."></textarea>';
+    h+='<div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="addBooking()">Save Booking</button></div>';
+    showModal(h);
   }
   if(type==='addInquiry'){
     showModal(`<div class="modal-handle"></div><div class="modal-title">New Inquiry</div>
@@ -1033,25 +1034,95 @@ function addInquiry(){
   inquiries.unshift({id:nextId++,name,phone,sport:sp,session:se,status:'new',notes,date:today});
   saveAll();closeModal();renderInquiries();renderInqFilters();
 }
+function buildTimeOptions(){
+  var opts='<option value="">-- Select --</option>';
+  var times=['12:00 AM','12:30 AM','1:00 AM','1:30 AM','2:00 AM','2:30 AM','3:00 AM','3:30 AM','4:00 AM','4:30 AM','5:00 AM','5:30 AM','6:00 AM','6:30 AM','7:00 AM','7:30 AM','8:00 AM','8:30 AM','9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM','5:30 PM','6:00 PM','6:30 PM','7:00 PM','7:30 PM','8:00 PM','8:30 PM','9:00 PM','9:30 PM','10:00 PM','10:30 PM','11:00 PM','11:30 PM'];
+  times.forEach(function(t){ opts+='<option value="'+t+'">'+t+'</option>'; });
+  return opts;
+}
+
+function timeToMins(t){
+  if(!t) return 0;
+  var parts=t.split(' ');
+  var hm=parts[0].split(':');
+  var h=parseInt(hm[0]); var m=parseInt(hm[1]);
+  var ampm=parts[1];
+  if(ampm==='PM'&&h!==12) h+=12;
+  if(ampm==='AM'&&h===12) h=0;
+  return h*60+m;
+}
+
+function calcDuration(){
+  var s=document.getElementById('bkStartTime');
+  var e=document.getElementById('bkEndTime');
+  var d=document.getElementById('bkHours');
+  if(!s||!e||!d) return;
+  var sv=s.value; var ev=e.value;
+  if(!sv||!ev){ d.value=''; return; }
+  var sm=timeToMins(sv); var em=timeToMins(ev);
+  if(em<sm) em+=24*60; // overnight
+  var diff=em-sm;
+  var hrs=Math.floor(diff/60); var mins=diff%60;
+  var label='';
+  if(hrs>0) label+=hrs+' Hour'+(hrs>1?'s':'');
+  if(mins>0) label+=(hrs>0?' ':'')+'& '+mins+' mins';
+  d.value=label;
+  // also set timeSlot display
+  if(document.getElementById('bkTimeSlot')) document.getElementById('bkTimeSlot').value=sv+' to '+ev;
+}
+
+function selectBkSport(el,sport){
+  document.querySelectorAll('#sportIcons > div').forEach(function(d){
+    d.style.border='2px solid #eee';
+    d.style.color='#aaa';
+    d.style.background='#fff';
+  });
+  el.style.border='2px solid #111';
+  el.style.color='#111';
+  el.style.background='#f4f4f2';
+  document.getElementById('bkSport').value=sport;
+}
+
+
+
+
+
+function onBkPaymentChange(){
+  var s=document.getElementById('bkPaid').value;
+  var pf=document.getElementById('bkPaidFields');var ptf=document.getElementById('bkPartialFields');
+  if(!pf||!ptf) return;
+  pf.style.display=s==='paid'?'block':'none';
+  ptf.style.display=s==='partial'?'block':'none';
+  if(s==='partial') calcBalance();
+}
+function calcBalance(){
+  var total=parseInt(document.getElementById('bkAmount').value)||0;
+  var paid=parseInt(document.getElementById('bkAmtPaid').value)||0;
+  var bs=document.getElementById('bkBalanceShow');var ba=document.getElementById('bkBalanceAmt');
+  if(bs&&ba){bs.style.display=(paid>0&&total>0)?'block':'none';ba.innerHTML='&#8377;'+(total-paid).toLocaleString('en-IN');}
+}
 function addBooking(){
-  const team=document.getElementById('bkTeam').value.trim();
-  const phone=document.getElementById('bkPhone').value.trim();
-  const date=document.getElementById('bkDate').value;
-  const timeSlot=document.getElementById('bkTimeSlot').value.trim();
-  const hours=document.getElementById('bkHours').value.trim();
-  const amount=parseInt(document.getElementById('bkAmount').value)||0;
-  const online=parseInt(document.getElementById('bkOnline').value)||0;
-  const cash=parseInt(document.getElementById('bkCash').value)||0;
-  const paid=document.getElementById('bkPaid').value==='true';
-  const notes=document.getElementById('bkNotes').value.trim();
+  var team=document.getElementById('bkTeam').value.trim();
+  var phone=document.getElementById('bkPhone').value.trim();
+  var sport=document.getElementById('bkSport').value;
+  var date=document.getElementById('bkDate').value;
+  var st=document.getElementById('bkStartTime').value;var et=document.getElementById('bkEndTime').value;
+  var timeSlot=st&&et?st+' to '+et:'';
+  var hours=document.getElementById('bkHours').value;
+  var amount=parseInt(document.getElementById('bkAmount').value)||0;
+  var ps=document.getElementById('bkPaid').value;
+  var notes=document.getElementById('bkNotes').value.trim();
   if(!team){alert('Please enter team/name.');return;}
   if(!date){alert('Please select a date.');return;}
   if(!amount){alert('Please enter amount.');return;}
-  bookings.unshift({id:nextId++,team,phone,date,timeSlot,hours,amount,online,cash,paid,notes,month:date.slice(0,7)});
-  saveBk(); closeModal();
-  bkMonthFilter=date.slice(0,7);
-  renderBkMonthFilter(); renderBookings(); renderDashboard();
+  var paid=(ps==='paid');var online=0;var cash=0;var balance=0;
+  if(ps==='paid'){online=parseInt(document.getElementById('bkOnline').value)||0;cash=parseInt(document.getElementById('bkCash').value)||0;}
+  else if(ps==='partial'){var ap=parseInt(document.getElementById('bkAmtPaid').value)||0;online=ap;balance=Math.max(0,amount-ap);}
+  else{balance=amount;}
+  bookings.unshift({id:nextId++,team:team,phone:phone,sport:sport,date:date,timeSlot:timeSlot,hours:hours,amount:amount,online:online,cash:cash,paid:paid,balance:balance,notes:notes,month:date.slice(0,7)});
+  saveBk();closeModal();bkMonthFilter=date.slice(0,7);renderBkMonthFilter();renderBookings();renderDashboard();
 }
+
 function openRecordFee(id,sess,sp){
   showModal(`<div class="modal-handle"></div><div class="modal-title">Record Payment</div>
     <div class="field-label">Amount (₹)</div><input type="number" id="feeAmt" placeholder="e.g. 2000"/>
@@ -1105,7 +1176,7 @@ window.saveCoachNote=saveCoachNote; window.saveAllSkills=saveAllSkills;
 window.openRecordFee=openRecordFee; window.recordFeePayment=recordFeePayment;
 window.openEditFee=openEditFee; window.saveEditFee=saveEditFee;
 window.generateReportCard=generateReportCard; window.closeReportCard=closeReportCard;
-window.setBkMonth=setBkMonth;window.toggleBkExpand=toggleBkExpand;window.markBkPaid=markBkPaid;window.deleteBk=deleteBk;window.editBk=editBk;window.saveEditBk=saveEditBk;window.addBooking=addBooking;
+window.setBkMonth=setBkMonth;window.toggleBkExpand=toggleBkExpand;window.selectBkSport=selectBkSport;window.calcDuration=calcDuration;window.onBkPaymentChange=onBkPaymentChange;window.calcBalance=calcBalance;window.selectBkSport=selectBkSport;window.calcDuration=calcDuration;window.toggleBkExpand=toggleBkExpand;window.markBkPaid=markBkPaid;window.deleteBk=deleteBk;window.editBk=editBk;window.saveEditBk=saveEditBk;window.addBooking=addBooking;
 window.setInqFilter=setInqFilter; window.setInqStatus=setInqStatus; window.deleteInq=deleteInq;
 </script>
 </body>
