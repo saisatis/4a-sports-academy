@@ -733,37 +733,59 @@ function getWS(){
 }
 
 function renderStudents(){
-  const list=(students[session][sport]||[]);
-  const ws=getWS();
-  const merged=list.map(st=>{const w=ws.find(x=>x.id===st.id)||{present:true,comment:''};return{...st,...w};});
-  const pCount=merged.filter(s=>s.present).length;
+  var list=(students[session][sport]||[]);
+  var ws=getWS();
+  var merged=list.map(function(st){var w=ws.find(function(x){return x.id===st.id;})||{present:true,comment:''};return Object.assign({},st,w);});
+  var pCount=merged.filter(function(s){return s.present;}).length;
   document.getElementById('totalCount').textContent=list.length;
   document.getElementById('presentCount').textContent=pCount;
   document.getElementById('absentCount').textContent=list.length-pCount;
-  let html='';
-  merged.forEach(st=>{
-    const p=st.present, open=expandedId===st.id;
-    const cleanPhone=(st.phone||'').replace(/[^0-9]/g,'');
-    const callBtn=(!p&&cleanPhone)?`<a class="call-link" href="tel:${cleanPhone}" onclick="event.stopPropagation()">&#128222;</a>`:'';
-    html+=`<div class="s-card">
-      <div class="s-row" onclick="toggleExpand(${st.id})">
-        <div class="avatar">${initials(st.studName||st.name)}</div>
-        <div class="s-info"><div class="s-name">${st.studName||'—'}</div><div class="s-sub">${st.dob||''}</div></div>
-        <div class="btn-group">${callBtn}<button class="pa-btn ${p?'p':'a'}" onclick="event.stopPropagation();togglePresent(${st.id})">${p?'P':'A'}</button></div>
-      </div>
-      ${open?`<div class="expand-panel">
-        <div class="d-row"><span class="d-key">Parent</span><span class="d-val">${st.name}</span></div>
-        <div class="d-row"><span class="d-key">Phone</span><span class="d-val">${st.phone||'—'}</span></div>
-        <div class="d-row"><span class="d-key">DOB</span><span class="d-val">${st.dob||'—'}</span></div>
-      </div>`:''}
-    </div>`;
+  var html='';
+  merged.forEach(function(st){
+    var p=st.present;
+    var cleanPhone=(st.phone||'').replace(/[^0-9]/g,'');
+    var callBtn=(!p&&cleanPhone)?'<a class="call-link" href="tel:'+cleanPhone+'" onclick="event.stopPropagation()">&#128222;</a>':'';
+    html+='<div class="s-card">';
+    // Main row - click avatar/name to go to profile
+    html+='<div class="s-row">';
+    html+='<div onclick="goToProfile('+st.id+',&quot;'+session+'&quot;,&quot;'+sport+'&quot;)" style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;">';
+    html+='<div class="avatar">'+initials(st.studName||st.name)+'</div>';
+    html+='<div class="s-info"><div class="s-name">'+(st.studName||'&#8212;')+'</div><div class="s-sub">'+(st.dob||'')+'</div></div>';
+    html+='</div>';
+    html+='<div class="btn-group">'+callBtn;
+    html+='<button class="pa-btn '+(p?'p':'a')+'" onclick="event.stopPropagation();togglePresent('+st.id+')">'+(p?'P':'A')+'</button>';
+    html+='</div></div>';
+    // Comment field - only show when absent
+    if(!p){
+      html+='<div style="padding:0 14px 12px;">';
+      html+='<input type="text" placeholder="Reason for absence (optional)" value="'+(st.comment||'')+'" onchange="setComment('+st.id+',this.value)" style="width:100%;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
+      html+='</div>';
+    }
+    html+='</div>';
   });
-  html+=`<button class="add-student-btn" onclick="openModal('addStudent')">+ Add Student</button>`;
+  html+='<button class="add-student-btn" onclick="openModal(&quot;addStudent&quot;)">+ Add Student</button>';
   document.getElementById('studentList').innerHTML=html;
 }
 
-function togglePresent(id){const ws=getWS();const s=ws.find(x=>x.id===id);if(s){s.present=!s.present;renderStudents();}}
+function togglePresent(id){
+  var ws=getWS();
+  var s=ws.find(function(x){return x.id===id;});
+  if(s){
+    s.present=!s.present;
+    if(s.present) s.comment='';
+    renderStudents();
+    saveAttendance();
+  }
+}
+function setComment(id,val){
+  var ws=getWS();
+  var s=ws.find(function(x){return x.id===id;});
+  if(s){s.comment=val;saveAttendance();}
+}
 function toggleExpand(id){expandedId=expandedId===id?null:id;renderStudents();}
+function goToProfile(id,sess,sp){
+  openProfileDetail(id,sess,sp);
+}
 function saveAttendance(){
   const ws=getWS();const dk=dateKey(selDate);
   attHistory=attHistory.filter(h=>!(h.date===dk&&h.session===session&&h.sport===sport));
@@ -980,8 +1002,8 @@ function openModal(type){
     h+='<div class="field-label">Phone</div><input type="tel" id="bkPhone" placeholder="e.g. 9876543210"/>';
     h+='<div class="field-label">Date</div><input type="date" id="bkDate" value="'+today+'"/>';
     h+='<div class="field-label">Sport</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;" id="sportIcons">';
-    var sp=[['Football','&#9917;'],['Cricket','&#127992;'],['Basketball','&#127944;'],['Pickleball','&#127955;'],['Nets','&#127999;'],['Other','&#127934;']];
-    for(var si=0;si<sp.length;si++){h+='<div onclick="selectBkSport(this,&quot;'+sp[si][0]+'&quot;)" style="text-align:center;padding:10px 4px;border:2px solid #eee;border-radius:12px;cursor:pointer;font-size:11px;font-weight:600;color:#aaa;"><div style="font-size:22px;margin-bottom:3px;">'+sp[si][1]+'</div>'+sp[si][0]+'</div>';}
+    var sp=[['Cricket / Football',''],['Nets',''],['Bowling Machine','']];
+    for(var si=0;si<sp.length;si++){h+='<div onclick="selectBkSport(this,&quot;'+sp[si][0]+'&quot;)" style="text-align:center;padding:14px 6px;border:2px solid #eee;border-radius:12px;cursor:pointer;font-size:12px;font-weight:600;color:#aaa;line-height:1.3;">'+sp[si][0]+'</div>';}
     h+='</div><input type="hidden" id="bkSport" value=""/>';
     h+='<div class="field-label">Time Slot</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">';
     h+='<select id="bkStartTime" onchange="calcDuration()" style="padding:12px;border:1.5px solid #eee;border-radius:12px;font-size:14px;font-family:inherit;background:#fafafa;">'+buildTimeOptions()+'</select>';
@@ -1164,7 +1186,7 @@ loggedInUser = localStorage.getItem('aca_user')||'admin';
 document.addEventListener('DOMContentLoaded', function(){ initApp(); });
 window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
-window.changeDate=changeDate; window.togglePresent=togglePresent;
+window.changeDate=changeDate; window.togglePresent=togglePresent;window.setComment=setComment;window.goToProfile=goToProfile;
 window.toggleExpand=toggleExpand; window.saveAttendance=saveAttendance;
 window.openModal=openModal; window.closeModal=closeModal;
 window.addStudent=addStudent; window.addInquiry=addInquiry;
@@ -1216,10 +1238,7 @@ window.setInqFilter=setInqFilter; window.setInqStatus=setInqStatus; window.delet
       <div class="sum-card absent"><div class="sum-val" id="absentCount">0</div><div class="sum-label">Absent</div></div>
     </div>
     <div class="list-area" id="studentList"></div>
-    <div class="save-bar">
-      <span class="saved-msg" id="savedBadge"></span>
-      <button class="save-btn" onclick="saveAttendance()">Save</button>
-    </div>
+
   </div>
 
   <!-- PROFILES -->
