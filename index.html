@@ -216,6 +216,9 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 .rc-close-btn{margin:0 16px;width:calc(100% - 32px);padding:14px;background:#111;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
 
 
+/* DONE BUTTON - mobile only */
+.comment-done-btn{display:none;}
+@media(max-width:768px){.comment-done-btn{display:block;padding:9px 14px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;}}
 /* BOOKINGS */
 .bk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:8px 12px;}
 .bk-stat{background:#fff;border-radius:10px;padding:8px 6px;border:1px solid #eee;}
@@ -757,8 +760,10 @@ function renderStudents(){
     html+='</div></div>';
     // Comment field - only show when absent
     if(!p){
-      html+='<div style="padding:0 14px 12px;">';
-      html+='<input type="text" placeholder="Reason for absence (optional)" value="'+(st.comment||'')+'" onchange="setComment('+st.id+',this.value)" style="width:100%;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
+      var lastComment=getLastComment(st.id);
+      html+='<div style="padding:0 14px 12px;display:flex;gap:8px;align-items:center;">';
+      html+='<input type="text" id="comment_'+st.id+'" placeholder="'+(lastComment?lastComment:'Reason for absence (optional)')+'" value="'+(st.comment||'')+'" onchange="setComment('+st.id+',this.value)" style="flex:1;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
+      html+='<button onclick="doneComment('+st.id+')" class="comment-done-btn">Done</button>';
       html+='</div>';
     }
     html+='</div>';
@@ -781,6 +786,24 @@ function setComment(id,val){
   var ws=getWS();
   var s=ws.find(function(x){return x.id===id;});
   if(s){s.comment=val;saveAttendance();}
+}
+function doneComment(id){
+  var el=document.getElementById('comment_'+id);
+  if(el){
+    setComment(id,el.value);
+    el.blur();
+  }
+}
+function getLastComment(id){
+  // Find last comment from attendance history for this student
+  for(var i=0;i<attHistory.length;i++){
+    var h=attHistory[i];
+    if(h.session===session&&h.sport===sport){
+      var st=h.students&&h.students.find(function(x){return x.id===id;});
+      if(st&&st.comment) return st.comment;
+    }
+  }
+  return '';
 }
 function toggleExpand(id){expandedId=expandedId===id?null:id;renderStudents();}
 function goToProfile(id,sess,sp){
@@ -1186,7 +1209,7 @@ loggedInUser = localStorage.getItem('aca_user')||'admin';
 document.addEventListener('DOMContentLoaded', function(){ initApp(); });
 window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
-window.changeDate=changeDate; window.togglePresent=togglePresent;window.setComment=setComment;window.goToProfile=goToProfile;
+window.changeDate=changeDate; window.togglePresent=togglePresent;window.setComment=setComment;window.doneComment=doneComment;window.goToProfile=goToProfile;
 window.toggleExpand=toggleExpand; window.saveAttendance=saveAttendance;
 window.openModal=openModal; window.closeModal=closeModal;
 window.addStudent=addStudent; window.addInquiry=addInquiry;
