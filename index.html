@@ -1246,18 +1246,28 @@ function getAllStudents(){
 function searchExistingStudent(val){
   var box=document.getElementById('studentSuggestions');
   if(!box) return;
-  if(!val||val.length<2){box.style.display='none';return;}
+  if(!val||val.length<1){box.style.display='none';return;}
   var all=getAllStudents();
+  var q=val.toLowerCase();
   var matches=all.filter(function(x){
-    return (x.st.studName||'').toLowerCase().includes(val.toLowerCase())||
+    return (x.st.studName||'').toLowerCase().includes(q)||
            (x.st.phone||'').includes(val);
+  });
+  // Remove duplicates by id
+  var seen={};
+  matches=matches.filter(function(x){
+    if(seen[x.st.id]) return false;
+    seen[x.st.id]=true;
+    return true;
   });
   if(!matches.length){box.style.display='none';return;}
   var html='';
-  matches.slice(0,6).forEach(function(x){
-    html+='<div onclick="fillStudentData('+JSON.stringify(x.st).replace(/"/g,'&quot;')+')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:14px;">';
-    html+='<div style="font-weight:600;color:#111;">'+(x.st.studName||'')+'</div>';
-    html+='<div style="font-size:12px;color:#aaa;">'+(x.st.phone||'')+(x.st.dob?' · '+x.st.dob:'')+'</div>';
+  matches.slice(0,8).forEach(function(x){
+    var st=x.st;
+    var stJson=JSON.stringify({id:st.id,studName:st.studName||'',name:st.name||'',phone:st.phone||'',dob:st.dob||'',joinDate:st.joinDate||''});
+    html+='<div onclick="fillStudentData('+stJson.replace(/"/g,'&quot;')+')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:14px;">';
+    html+='<div style="font-weight:600;color:#111;">'+(st.studName||'')+'</div>';
+    if(st.phone||st.dob) html+='<div style="font-size:12px;color:#aaa;">'+(st.phone||'')+(st.dob?' · '+st.dob:'')+'</div>';
     html+='</div>';
   });
   box.innerHTML=html;
@@ -1265,16 +1275,13 @@ function searchExistingStudent(val){
 }
 function fillStudentData(st){
   document.getElementById('newStudName').value=st.studName||'';
-  document.getElementById('newName').value=st.name||'';
-  document.getElementById('newPhone').value=st.phone||'';
-  document.getElementById('newDob').value=st.dob||'';
-  document.getElementById('newJoin').value=st.joinDate||'';
+  if(document.getElementById('newName')) document.getElementById('newName').value=st.name||'';
+  if(document.getElementById('newPhone')) document.getElementById('newPhone').value=st.phone||'';
+  if(document.getElementById('newDob')) document.getElementById('newDob').value=st.dob||'';
+  if(document.getElementById('newJoin')) document.getElementById('newJoin').value=st.joinDate||'';
   var box=document.getElementById('studentSuggestions');
   if(box) box.style.display='none';
-  // Mark as existing student
-  document.getElementById('newStudName').dataset.existingId=st.id;
-  document.getElementById('newStudName').dataset.existingSess='';
-  document.getElementById('newStudName').dataset.existingSp='';
+  document.getElementById('newStudName').dataset.existingId=st.id||'';
 }
 
 function addStudent(){
@@ -1288,51 +1295,61 @@ function addStudent(){
   var feeAmt=parseInt(document.getElementById('newFeeAmt').value)||2000;
   var feeType=document.getElementById('newFeeType').value;
   if(!studName){alert('Please enter student name.');return;}
-  
+
   var existingId=document.getElementById('newStudName').dataset.existingId;
   var sid;
-  
-  if(existingId){
-    // Existing student - just add to attendance batch, skip profile creation
+  var isExisting=existingId&&existingId!=='';
+
+  if(isExisting){
     sid=parseInt(existingId);
-    // Add to students[sess][sp] if not there
+    // Find the student object
+    var existSt=null;
+    var allSess=['morning','evening'];
+    var allSp=['Football','Basketball','Cricket'];
+    for(var i=0;i<allSess.length;i++){
+      for(var j=0;j<allSp.length;j++){
+        var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
+        var f=l.find(function(s){return s.id===sid;});
+        if(!f){l=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]])||[];f=l.find(function(s){return s.id===sid;});}
+        if(f){existSt=f;break;}
+      }
+      if(existSt) break;
+    }
+    // Add to target session/sport profile list
     if(!students[sess]) students[sess]={};
     if(!students[sess][sp]) students[sess][sp]=[];
-    if(!students[sess][sp].find(function(s){return s.id===sid;})){
-      var existSt=null;
-      var sessions2=['morning','evening'];
-      var sports2=['Football','Basketball','Cricket'];
-      for(var i=0;i<sessions2.length;i++){
-        for(var j=0;j<sports2.length;j++){
-          var l=(students[sessions2[i]]&&students[sessions2[i]][sports2[j]])||[];
-          var f=l.find(function(s){return s.id===sid;});
-          if(!f){l=(DEFAULT_STUDENTS[sessions2[i]]&&DEFAULT_STUDENTS[sessions2[i]][sports2[j]])||[];f=l.find(function(s){return s.id===sid;});}
-          if(f){existSt=f;break;}
-        }
-        if(existSt) break;
-      }
-      if(existSt) students[sess][sp].push(existSt);
+    if(!students[sess][sp].find(function(s){return s.id===sid;}) && existSt){
+      students[sess][sp].push(existSt);
     }
   } else {
-    // New student - add to profile and attendance
+    // Brand new student
     sid=nextId++;
     var newSt={id:sid,name:name,studName:studName,phone:phone,dob:dob,joinDate:join,fee:'unpaid',feeAmount:feeAmt,feeType:feeType,feeHistory:[],skills:{},perf:{}};
     if(!students[sess]) students[sess]={};
     if(!students[sess][sp]) students[sess][sp]=[];
     students[sess][sp].push(newSt);
   }
-  
-  // Add to today's working state
-  var ws=getWS();
-  if(!ws.find(function(s){return s.id===sid;})){
-    ws.push({id:sid,studName:studName,present:true,comment:''});
+
+  // Add to attHistory for today so they appear in attendance
+  var dk=dateKey(selDate);
+  var existing=attHistory.find(function(h){return h.date===dk&&h.session===sess&&h.sport===sp;});
+  if(existing){
+    if(!existing.students.find(function(s){return s.id===sid;})){
+      existing.students.push({id:sid,studName:studName,present:true,comment:''});
+    }
+  } else {
+    attHistory.push({date:dk,session:sess,sport:sp,students:[{id:sid,studName:studName,present:true,comment:''}]});
   }
-  
+
+  // Clear workingState so it rebuilds from updated attHistory
+  workingState={};
+
   saveAll();
   closeModal();
   renderStudents();
   renderProfiles();
 }
+
 
 function openRecordFee(id,sess,sp){
   showModal(`<div class="modal-handle"></div><div class="modal-title">Record Payment</div>
