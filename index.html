@@ -19,12 +19,12 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 .login-error{font-size:13px;color:#e74c3c;margin-top:10px;min-height:18px;text-align:center;}
 
 /* APP SHELL */
-#appShell{display:block;padding-bottom:72px;}
+#appShell{display:none;padding-bottom:72px;}
 .screen{display:none;}
 .screen.active{display:block;}
 
 /* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;z-index:50;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:none;z-index:50;}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;cursor:pointer;color:#ccc;font-size:10px;font-weight:600;gap:3px;border:none;background:none;letter-spacing:0.02em;}
 .nav-item.active{color:#111;}
 .nav-icon{font-size:22px;line-height:1;}
@@ -281,7 +281,7 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen" style="display:none!important;height:0;overflow:hidden;">
+<div id="loginScreen">
   <div class="login-logo">🏆</div>
   <div class="login-title">4A Sports Academy</div>
   <div class="login-sub">Admin Portal</div>
@@ -309,7 +309,7 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
   </div>
 
 <!-- BOTTOM NAV -->
-<div class="bottom-nav" id="bottomNav" style="display:flex;">
+<div class="bottom-nav" id="bottomNav" style="display:none;">
   <button class="nav-item" id="nav-dashboard" onclick="showScreen('dashboard')"><span class="nav-icon">&#8962;</span>Home</button>
   <button class="nav-item" id="nav-attendance" onclick="showScreen('attendance')"><span class="nav-icon">&#10003;</span>Attend</button>
   <button class="nav-item" id="nav-profiles" onclick="showScreen('profiles')"><span class="nav-icon">&#128100;</span>Profiles</button>
@@ -566,20 +566,7 @@ function saveEditBk(id){
 }
 
 // ── LOGIN ──────────────────────────────────────────────
-async function doLogin(){
-  const email=document.getElementById('loginUser').value.trim();
-  const pass=document.getElementById('loginPass').value;
-  if(!email){document.getElementById('loginError').textContent='Please enter email.';return;}
-  if(!pass){document.getElementById('loginError').textContent='Please enter password.';return;}
-  document.getElementById('loginError').textContent='Signing in...';
-  try{ await signInWithEmailAndPassword(auth,email,pass); }
-  catch(e){
-    const msg={'auth/invalid-email':'Invalid email.','auth/user-not-found':'No account found.','auth/wrong-password':'Wrong password.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts. Try later.','auth/network-request-failed':'Network error.'}[e.code]||'Error: '+e.code;
-    document.getElementById('loginError').textContent=msg;
-  }
-}
-async function doLogout(){await signOut(auth);localStorage.removeItem('aca_user');loggedInUser='';}
-document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
 
 function initApp(){
   renderDashboard();updateDateDisplay();renderSportChips();renderStudents();
@@ -1187,9 +1174,61 @@ function saveEditFee(id,sess,sp){
 }
 
 // ── EXPOSE TO WINDOW ───────────────────────────────────
-// Auto init
-loggedInUser = localStorage.getItem('aca_user')||'admin';
-document.addEventListener('DOMContentLoaded', function(){ initApp(); });
+// ── FIREBASE AUTH ────────────────────────────────────
+function showApp(email){
+  loggedInUser = email.split('@')[0];
+  localStorage.setItem('aca_user', loggedInUser);
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  document.getElementById('bottomNav').style.display='flex';
+  loadFromFirebase().then(function(){ initApp(); });
+}
+
+function showLoginScreen(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('bottomNav').style.display='none';
+}
+
+async function doLogin(){
+  var email=document.getElementById('loginUser').value.trim();
+  var pass=document.getElementById('loginPass').value;
+  if(!email){document.getElementById('loginError').textContent='Please enter email.';return;}
+  if(!pass){document.getElementById('loginError').textContent='Please enter password.';return;}
+  document.getElementById('loginError').textContent='Signing in...';
+  try{
+    var result = await auth.signInWithEmailAndPassword(email, pass);
+    showApp(result.user.email);
+  }catch(e){
+    var msgs={
+      'auth/invalid-email':'Invalid email.',
+      'auth/user-not-found':'No account found.',
+      'auth/wrong-password':'Wrong password.',
+      'auth/invalid-credential':'Wrong email or password.',
+      'auth/too-many-requests':'Too many attempts. Try later.',
+      'auth/network-request-failed':'Network error.'
+    };
+    document.getElementById('loginError').textContent = msgs[e.code]||('Error: '+e.code);
+  }
+}
+
+async function doLogout(){
+  try{ await auth.signOut(); }catch(e){}
+  localStorage.removeItem('aca_user');
+  loggedInUser='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent='';
+  showLoginScreen();
+}
+
+// Check auth state on load
+document.addEventListener('DOMContentLoaded', function(){
+  auth.onAuthStateChanged(function(user){
+    if(user){ showApp(user.email); }
+    else{ showLoginScreen(); }
+  });
+});
+
 window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
 window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;
