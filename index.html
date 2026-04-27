@@ -333,7 +333,10 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
   <div class="modal" id="modalContent"></div>
 </div>
 
-<script>
+<script defer>
+const QUOTES=['Great things take time.','Discipline is the bridge.','Push your limits!','Train hard, win easy.','Champions keep going.','Every rep counts.','Success is earned.','Be consistent!','No shortcuts.','Believe and achieve.'];
+const ALL_SPORTS=['Football','Basketball','Cricket'];
+const BATCHES={morning:['Football','Basketball','Cricket'],evening:['Football','Basketball','Cricket']};
 
 const firebaseConfig = {
   apiKey: "AIzaSyAgMtGO7X52sFQVX6hRZUFObBslzZIfEk4",
