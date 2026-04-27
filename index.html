@@ -555,7 +555,7 @@ function fmtKey(k){return keyToDate(k).toLocaleDateString('en-IN',{weekday:'shor
 function fmtMoney(n){return '₹'+Number(n).toLocaleString('en-IN');}
 function calcAge(dob){if(!dob)return null;const p=dob.split('/');if(p.length!==3)return null;const d=new Date(+p[2],+p[1]-1,+p[0]);if(isNaN(d))return null;const t=new Date();let a=t.getFullYear()-d.getFullYear();const m=t.getMonth()-d.getMonth();if(m<0||(m===0&&t.getDate()<d.getDate()))a--;return a;}
 function calcCategory(dob){const a=calcAge(dob);if(a===null)return null;if(a<=8)return{label:'Under-8',short:'U8',color:'#2980b9',bg:'#e8f0fe'};if(a<=10)return{label:'Under-10',short:'U10',color:'#27ae60',bg:'#e8f5e9'};if(a<=12)return{label:'Under-12',short:'U12',color:'#e67e22',bg:'#fff3e0'};if(a<=14)return{label:'Under-14',short:'U14',color:'#e74c3c',bg:'#fdecea'};if(a<=16)return{label:'Under-16',short:'U16',color:'#8e44ad',bg:'#f3e8fd'};if(a<=18)return{label:'Under-18',short:'U18',color:'#00695c',bg:'#e0f2f1'};return{label:'Senior',short:'SR',color:'#555',bg:'#f4f4f2'};}
-function getAllStudents(){let all=[];Object.keys(BATCHES).forEach(sess=>Object.keys(students[sess]).forEach(sp=>{students[sess][sp].forEach(st=>all.push({...st,session:sess,sport:sp}));}));return all;}
+
 function getMonthKey(offset=0){const d=new Date();d.setMonth(d.getMonth()-offset);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function fmtMonthKey(key){const[y,m]=key.split('-');return new Date(+y,+m-1,1).toLocaleDateString('en-IN',{month:'short',year:'numeric'});}
 function ensurePerf(st){if(!st.perf)st.perf={position:'',level:'Beginner',dominant:'',coachNote:'',monthly:{}};return st.perf;}
@@ -1173,19 +1173,28 @@ document.getElementById('modalOverlay').addEventListener('click',function(e){if(
 
 function openModal(type){
   if(type==='addStudent'||type==='addProfile'){
-    const all=[...new Set([...BATCHES.morning,...BATCHES.evening])];
-    showModal(`<div class="modal-handle"></div><div class="modal-title">Add New Student</div>
-      <div class="field-label">Student Name</div><input type="text" id="newStudName" placeholder="e.g. Josith Rakshan"/>
-      <div class="field-label">Parent Name</div><input type="text" id="newName" placeholder="e.g. Ashok"/>
-      <div class="field-label">Parent Phone</div><input type="tel" id="newPhone" placeholder="e.g. 9876543210"/>
-      <div class="field-label">Date of Birth</div><input type="text" id="newDob" placeholder="e.g. 14/02/2018"/>
-      <div class="field-label">Join Date</div><input type="text" id="newJoin" placeholder="e.g. 01/06/2025"/>
-      <div class="field-label">Sport</div><select id="newSport">${all.map(s=>`<option>${s}</option>`).join('')}</select>
-      <div class="field-label">Session</div><select id="newSession"><option value="morning">Morning</option><option value="evening">Evening</option></select>
-      <div class="field-label">Fee Amount (₹)</div><input type="number" id="newFeeAmt" value="2000"/>
-      <div class="field-label">Fee Type</div><select id="newFeeType"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="onetime">One-time</option></select>
-      <div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="addStudent()">Add Student</button></div>`);
-    document.getElementById('newSport').value=sport;document.getElementById('newSession').value=session;
+    var all2=[...new Set([...BATCHES.morning,...BATCHES.evening])];
+    var h2='';
+    h2+='<div class="modal-handle"></div><div class="modal-title">Add Student</div>';
+    h2+='<div class="field-label">Student Name</div>';
+    h2+='<div style="position:relative;">';
+    h2+='<input type="text" id="newStudName" placeholder="e.g. Josith Rakshan" oninput="searchExistingStudent(this.value)" autocomplete="off" style="width:100%;"/>';
+    h2+='<div id="studentSuggestions" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #eee;border-radius:12px;z-index:200;display:none;max-height:180px;overflow-y:auto;"></div>';
+    h2+='</div>';
+    h2+='<div class="field-label">Parent Name</div><input type="text" id="newName" placeholder="e.g. Ashok"/>';
+    h2+='<div class="field-label">Parent Phone</div><input type="tel" id="newPhone" placeholder="e.g. 9876543210"/>';
+    h2+='<div class="field-label">Date of Birth</div><input type="text" id="newDob" placeholder="e.g. 14/02/2018"/>';
+    h2+='<div class="field-label">Join Date</div><input type="text" id="newJoin" placeholder="e.g. 01/06/2025"/>';
+    h2+='<div class="field-label">Sport</div><select id="newSport">';
+    for(var si2=0;si2<all2.length;si2++) h2+='<option>'+all2[si2]+'</option>';
+    h2+='</select>';
+    h2+='<div class="field-label">Session</div><select id="newSession"><option value="morning">Morning</option><option value="evening">Evening</option></select>';
+    h2+='<div class="field-label">Fee Amount (&#8377;)</div><input type="number" id="newFeeAmt" value="2000"/>';
+    h2+='<div class="field-label">Fee Type</div><select id="newFeeType"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="onetime">One-time</option></select>';
+    h2+='<div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="addStudent()">Add Student</button></div>';
+    showModal(h2);
+    document.getElementById('newSport').value=sport;
+    document.getElementById('newSession').value=session;
   }
   if(type==='addBooking'){
     var today=new Date().toISOString().slice(0,10);
@@ -1221,121 +1230,108 @@ function openModal(type){
       <div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="addInquiry()">Save</button></div>`);
   }
 }
-function addStudent(){
-  const studName=document.getElementById('newStudName').value.trim();
-  const name=document.getElementById('newName').value.trim();
-  const phone=document.getElementById('newPhone').value.trim();
-  const dob=document.getElementById('newDob').value.trim();
-  const join=document.getElementById('newJoin').value.trim();
-  const sp=document.getElementById('newSport').value;
-  const se=document.getElementById('newSession').value;
-  const feeAmt=parseInt(document.getElementById('newFeeAmt').value)||2000;
-  const feeType=document.getElementById('newFeeType').value;
-  if(!studName){alert('Please enter student name.');return;}
-  if(!students[se][sp])students[se][sp]=[];
-  students[se][sp].push({id:nextId++,name,studName,phone,dob,joinDate:join,fee:'unpaid',feeAmount:feeAmt,feeType,feeHistory:[]});
-  saveAll();closeModal();
-  if(se===session&&sp===sport)renderStudents();
-  renderProfiles();
-}
-function addInquiry(){
-  const name=document.getElementById('inqName').value.trim();
-  const phone=document.getElementById('inqPhone').value.trim();
-  const sp=document.getElementById('inqSport').value;
-  const se=document.getElementById('inqSession').value;
-  const notes=document.getElementById('inqNotes').value.trim();
-  if(!name){alert('Please enter a name.');return;}
-  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});
-  inquiries.unshift({id:nextId++,name,phone,sport:sp,session:se,status:'new',notes,date:today});
-  saveAll();closeModal();renderInquiries();renderInqFilters();
-}
-function buildTimeOptions(){
-  var opts='<option value="">-- Select --</option>';
-  var times=['12:00 AM','12:30 AM','1:00 AM','1:30 AM','2:00 AM','2:30 AM','3:00 AM','3:30 AM','4:00 AM','4:30 AM','5:00 AM','5:30 AM','6:00 AM','6:30 AM','7:00 AM','7:30 AM','8:00 AM','8:30 AM','9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM','5:30 PM','6:00 PM','6:30 PM','7:00 PM','7:30 PM','8:00 PM','8:30 PM','9:00 PM','9:30 PM','10:00 PM','10:30 PM','11:00 PM','11:30 PM'];
-  times.forEach(function(t){ opts+='<option value="'+t+'">'+t+'</option>'; });
-  return opts;
-}
-
-function timeToMins(t){
-  if(!t) return 0;
-  var parts=t.split(' ');
-  var hm=parts[0].split(':');
-  var h=parseInt(hm[0]); var m=parseInt(hm[1]);
-  var ampm=parts[1];
-  if(ampm==='PM'&&h!==12) h+=12;
-  if(ampm==='AM'&&h===12) h=0;
-  return h*60+m;
-}
-
-function calcDuration(){
-  var s=document.getElementById('bkStartTime');
-  var e=document.getElementById('bkEndTime');
-  var d=document.getElementById('bkHours');
-  if(!s||!e||!d) return;
-  var sv=s.value; var ev=e.value;
-  if(!sv||!ev){ d.value=''; return; }
-  var sm=timeToMins(sv); var em=timeToMins(ev);
-  if(em<sm) em+=24*60; // overnight
-  var diff=em-sm;
-  var hrs=Math.floor(diff/60); var mins=diff%60;
-  var label='';
-  if(hrs>0) label+=hrs+' Hour'+(hrs>1?'s':'');
-  if(mins>0) label+=(hrs>0?' ':'')+'& '+mins+' mins';
-  d.value=label;
-  // also set timeSlot display
-  if(document.getElementById('bkTimeSlot')) document.getElementById('bkTimeSlot').value=sv+' to '+ev;
-}
-
-function selectBkSport(el,sport){
-  document.querySelectorAll('#sportIcons > div').forEach(function(d){
-    d.style.border='2px solid #eee';
-    d.style.color='#aaa';
-    d.style.background='#fff';
+function getAllStudents(){
+  var all=[];
+  var sessions=['morning','evening'];
+  var sports=['Football','Basketball','Cricket'];
+  sessions.forEach(function(sess){
+    sports.forEach(function(sp){
+      var list=(students[sess]&&students[sess][sp])||[];
+      if(!list.length) list=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];
+      list.forEach(function(s){ all.push({st:s,sess:sess,sp:sp}); });
+    });
   });
-  el.style.border='2px solid #111';
-  el.style.color='#111';
-  el.style.background='#f4f4f2';
-  document.getElementById('bkSport').value=sport;
+  return all;
+}
+function searchExistingStudent(val){
+  var box=document.getElementById('studentSuggestions');
+  if(!box) return;
+  if(!val||val.length<2){box.style.display='none';return;}
+  var all=getAllStudents();
+  var matches=all.filter(function(x){
+    return (x.st.studName||'').toLowerCase().includes(val.toLowerCase())||
+           (x.st.phone||'').includes(val);
+  });
+  if(!matches.length){box.style.display='none';return;}
+  var html='';
+  matches.slice(0,6).forEach(function(x){
+    html+='<div onclick="fillStudentData('+JSON.stringify(x.st).replace(/"/g,'&quot;')+')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;font-size:14px;">';
+    html+='<div style="font-weight:600;color:#111;">'+(x.st.studName||'')+'</div>';
+    html+='<div style="font-size:12px;color:#aaa;">'+(x.st.phone||'')+(x.st.dob?' · '+x.st.dob:'')+'</div>';
+    html+='</div>';
+  });
+  box.innerHTML=html;
+  box.style.display='block';
+}
+function fillStudentData(st){
+  document.getElementById('newStudName').value=st.studName||'';
+  document.getElementById('newName').value=st.name||'';
+  document.getElementById('newPhone').value=st.phone||'';
+  document.getElementById('newDob').value=st.dob||'';
+  document.getElementById('newJoin').value=st.joinDate||'';
+  var box=document.getElementById('studentSuggestions');
+  if(box) box.style.display='none';
+  // Mark as existing student
+  document.getElementById('newStudName').dataset.existingId=st.id;
+  document.getElementById('newStudName').dataset.existingSess='';
+  document.getElementById('newStudName').dataset.existingSp='';
 }
 
-
-
-
-
-function onBkPaymentChange(){
-  var s=document.getElementById('bkPaid').value;
-  var pf=document.getElementById('bkPaidFields');var ptf=document.getElementById('bkPartialFields');
-  if(!pf||!ptf) return;
-  pf.style.display=s==='paid'?'block':'none';
-  ptf.style.display=s==='partial'?'block':'none';
-  if(s==='partial') calcBalance();
-}
-function calcBalance(){
-  var total=parseInt(document.getElementById('bkAmount').value)||0;
-  var paid=parseInt(document.getElementById('bkAmtPaid').value)||0;
-  var bs=document.getElementById('bkBalanceShow');var ba=document.getElementById('bkBalanceAmt');
-  if(bs&&ba){bs.style.display=(paid>0&&total>0)?'block':'none';ba.innerHTML='&#8377;'+(total-paid).toLocaleString('en-IN');}
-}
-function addBooking(){
-  var team=document.getElementById('bkTeam').value.trim();
-  var phone=document.getElementById('bkPhone').value.trim();
-  var sport=document.getElementById('bkSport').value;
-  var date=document.getElementById('bkDate').value;
-  var st=document.getElementById('bkStartTime').value;var et=document.getElementById('bkEndTime').value;
-  var timeSlot=st&&et?st+' to '+et:'';
-  var hours=document.getElementById('bkHours').value;
-  var amount=parseInt(document.getElementById('bkAmount').value)||0;
-  var ps=document.getElementById('bkPaid').value;
-  var notes=document.getElementById('bkNotes').value.trim();
-  if(!team){alert('Please enter team/name.');return;}
-  if(!date){alert('Please select a date.');return;}
-  if(!amount){alert('Please enter amount.');return;}
-  var paid=(ps==='paid');var online=0;var cash=0;var balance=0;
-  if(ps==='paid'){online=parseInt(document.getElementById('bkOnline').value)||0;cash=parseInt(document.getElementById('bkCash').value)||0;}
-  else if(ps==='partial'){var ap=parseInt(document.getElementById('bkAmtPaid').value)||0;online=ap;balance=Math.max(0,amount-ap);}
-  else{balance=amount;}
-  bookings.unshift({id:nextId++,team:team,phone:phone,sport:sport,date:date,timeSlot:timeSlot,hours:hours,amount:amount,online:online,cash:cash,paid:paid,balance:balance,notes:notes,month:date.slice(0,7)});
-  saveBk();closeModal();bkMonthFilter=date.slice(0,7);renderBkMonthFilter();renderBookings();renderDashboard();
+function addStudent(){
+  var studName=document.getElementById('newStudName').value.trim();
+  var name=document.getElementById('newName').value.trim();
+  var phone=document.getElementById('newPhone').value.trim();
+  var dob=document.getElementById('newDob').value.trim();
+  var join=document.getElementById('newJoin').value.trim();
+  var sp=document.getElementById('newSport').value;
+  var sess=document.getElementById('newSession').value;
+  var feeAmt=parseInt(document.getElementById('newFeeAmt').value)||2000;
+  var feeType=document.getElementById('newFeeType').value;
+  if(!studName){alert('Please enter student name.');return;}
+  
+  var existingId=document.getElementById('newStudName').dataset.existingId;
+  var sid;
+  
+  if(existingId){
+    // Existing student - just add to attendance batch, skip profile creation
+    sid=parseInt(existingId);
+    // Add to students[sess][sp] if not there
+    if(!students[sess]) students[sess]={};
+    if(!students[sess][sp]) students[sess][sp]=[];
+    if(!students[sess][sp].find(function(s){return s.id===sid;})){
+      var existSt=null;
+      var sessions2=['morning','evening'];
+      var sports2=['Football','Basketball','Cricket'];
+      for(var i=0;i<sessions2.length;i++){
+        for(var j=0;j<sports2.length;j++){
+          var l=(students[sessions2[i]]&&students[sessions2[i]][sports2[j]])||[];
+          var f=l.find(function(s){return s.id===sid;});
+          if(!f){l=(DEFAULT_STUDENTS[sessions2[i]]&&DEFAULT_STUDENTS[sessions2[i]][sports2[j]])||[];f=l.find(function(s){return s.id===sid;});}
+          if(f){existSt=f;break;}
+        }
+        if(existSt) break;
+      }
+      if(existSt) students[sess][sp].push(existSt);
+    }
+  } else {
+    // New student - add to profile and attendance
+    sid=nextId++;
+    var newSt={id:sid,name:name,studName:studName,phone:phone,dob:dob,joinDate:join,fee:'unpaid',feeAmount:feeAmt,feeType:feeType,feeHistory:[],skills:{},perf:{}};
+    if(!students[sess]) students[sess]={};
+    if(!students[sess][sp]) students[sess][sp]=[];
+    students[sess][sp].push(newSt);
+  }
+  
+  // Add to today's working state
+  var ws=getWS();
+  if(!ws.find(function(s){return s.id===sid;})){
+    ws.push({id:sid,studName:studName,present:true,comment:''});
+  }
+  
+  saveAll();
+  closeModal();
+  renderStudents();
+  renderProfiles();
 }
 
 function openRecordFee(id,sess,sp){
@@ -1379,7 +1375,7 @@ loggedInUser = localStorage.getItem('aca_user')||'admin';
 document.addEventListener('DOMContentLoaded', function(){ initApp(); });
 window.saveAllSkills=saveAllSkills;window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
-window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.removeFromBatch=removeFromBatch;window.setActive=setActive;window.toggleAttExpand=toggleAttExpand;window.toggleInactiveView=toggleInactiveView;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;
+window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.removeFromBatch=removeFromBatch;window.setActive=setActive;window.toggleAttExpand=toggleAttExpand;window.toggleInactiveView=toggleInactiveView;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;window.searchExistingStudent=searchExistingStudent;window.fillStudentData=fillStudentData;
 window.toggleExpand=toggleExpand; window.saveAttendance=saveAttendance;
 window.openModal=openModal; window.closeModal=closeModal;
 window.addStudent=addStudent; window.addInquiry=addInquiry;
