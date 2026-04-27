@@ -441,14 +441,18 @@ function initApp(){
   renderProfileFilters();renderProfiles();renderBkMonthFilter();renderBookings();renderInqFilters();renderInquiries();
 }
 
+function saveAllSkills(id,sess,sp){
+  saveAll();
+  var b=document.createElement('div');
+  b.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#27ae60;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;';
+  b.textContent='✓ Skills saved!';
+  document.body.appendChild(b);
+  setTimeout(function(){b.remove();},2000);
+}
+
 function showApp(email){
   loggedInUser=email.split('@')[0];
   localStorage.setItem('aca_user',loggedInUser);
-  // Clear stale cache so Firebase is always source of truth
-  localStorage.removeItem('aca_attHistory');
-  localStorage.removeItem('aca_bookings');
-  localStorage.removeItem('aca_inquiries');
-  localStorage.removeItem('aca_nextid');
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appShell').style.display='block';
   document.getElementById('bottomNav').style.display='flex';
@@ -1358,7 +1362,7 @@ function saveEditFee(id,sess,sp){
 // Auto init
 loggedInUser = localStorage.getItem('aca_user')||'admin';
 document.addEventListener('DOMContentLoaded', function(){ initApp(); });
-window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
+window.saveAllSkills=saveAllSkills;window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
 window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.removeFromBatch=removeFromBatch;window.setActive=setActive;window.toggleAttExpand=toggleAttExpand;window.toggleInactiveView=toggleInactiveView;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;
 window.toggleExpand=toggleExpand; window.saveAttendance=saveAttendance;
