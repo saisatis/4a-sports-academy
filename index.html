@@ -330,6 +330,151 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
   <div class="modal" id="modalContent"></div>
 </div>
 
+  <!-- DASHBOARD -->
+  <div class="screen" id="screen-dashboard">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title" id="dashGreeting">Dashboard</div>
+        <button class="sign-out-btn" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+    <div id="dashContent"></div>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div class="screen" id="screen-attendance">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Attendance</div>
+        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
+      </div>
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="changeDate(-1)">&#8249;</button>
+        <div id="dateLabel"></div>
+        <button class="date-nav-btn" id="nextDateBtn" onclick="changeDate(1)">&#8250;</button>
+      </div>
+    </div>
+    <div class="sess-tabs">
+      <div class="sess-tab active" onclick="switchSession('morning',this)">&#9728; Morning</div>
+      <div class="sess-tab" onclick="switchSession('evening',this)">&#127748; Evening</div>
+    </div>
+    <div class="sport-chips" id="sportChips"></div>
+    <div class="summary-grid">
+      <div class="sum-card total"><div class="sum-val" id="totalCount">0</div><div class="sum-label">Total</div></div>
+      <div class="sum-card present"><div class="sum-val" id="presentCount">0</div><div class="sum-label">Present</div></div>
+      <div class="sum-card absent"><div class="sum-val" id="absentCount">0</div><div class="sum-label">Absent</div></div>
+    </div>
+    <div class="list-area" id="studentList"></div>
+
+  </div>
+
+  <!-- PROFILES -->
+  <div class="screen" id="screen-profiles">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Profiles</div>
+        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" placeholder="Search student or parent..." oninput="filterProfiles(this.value)" id="profileSearch"/>
+    </div>
+    <div class="filter-row" id="profileFilters"></div>
+    <div class="profile-list" id="profileList"></div>
+  </div>
+
+  <!-- INQUIRIES -->
+  <div class="screen" id="screen-inquiries">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Inquiries</div>
+        <button class="add-hdr-btn" onclick="openModal('addInquiry')">+ Add</button>
+      </div>
+    </div>
+    <div class="filter-row" id="inqFilters" style="padding:10px 16px;"></div>
+    <div class="inq-list" id="inquiryList"></div>
+  </div>
+
+</div>
+
+
+// ── FIREBASE SYNC ─────────────────────────────────────
+async function loadFromFirebase(){
+  try{
+    var results = await Promise.all([
+      fsGet('academy/attHistory'),
+      fsGet('academy/bookings'),
+      fsGet('academy/inquiries'),
+      fsGet('academy/meta')
+    ]);
+    var aS=results[0],bkS=results[1],iS=results[2],mS=results[3];
+    if(aS&&aS.data){ attHistory=JSON.parse(aS.data); }
+    if(bkS&&bkS.data){ bookings=JSON.parse(bkS.data); }
+    if(iS&&iS.data){ inquiries=JSON.parse(iS.data); }
+    if(mS&&mS.nextId){ nextId=mS.nextId; }
+    console.log('Firebase loaded: att='+attHistory.length+' bk='+bookings.length);
+  }catch(e){ console.warn('loadFromFirebase error:',e); }
+}
+function saveAll(){
+  localStorage.setItem('aca_attHistory',JSON.stringify(attHistory));
+  localStorage.setItem('aca_inquiries',JSON.stringify(inquiries));
+  localStorage.setItem('aca_nextid',JSON.stringify(nextId));
+  try{
+    fsSet('academy/attHistory',{data:JSON.stringify(attHistory)});
+    fsSet('academy/inquiries',{data:JSON.stringify(inquiries)});
+    fsSet('academy/meta',{nextId:nextId});
+  }catch(e){ console.warn('saveAll Firebase error:',e); }
+}
+function saveBkFirebase(){
+  try{ fsSet('academy/bookings',{data:JSON.stringify(bookings)}); }catch(e){}
+}
+// ── AUTH ──────────────────────────────────────────────
+function showApp(email){
+  loggedInUser=email.split('@')[0];
+  localStorage.setItem('aca_user',loggedInUser);
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  document.getElementById('bottomNav').style.display='flex';
+  loadFromFirebase().then(function(){ initApp(); });
+}
+function showLoginScreen(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('bottomNav').style.display='none';
+}
+async function doLogin(){
+  var email=document.getElementById('loginUser').value.trim();
+  var pass=document.getElementById('loginPass').value;
+  if(!email){document.getElementById('loginError').textContent='Please enter email.';return;}
+  if(!pass){document.getElementById('loginError').textContent='Please enter password.';return;}
+  document.getElementById('loginError').textContent='Signing in...';
+  try{
+    var result=await auth.signInWithEmailAndPassword(email,pass);
+    showApp(result.user.email);
+  }catch(e){
+    var msgs={'auth/invalid-email':'Invalid email.','auth/user-not-found':'No account found.','auth/wrong-password':'Wrong password.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts.'};
+    document.getElementById('loginError').textContent=msgs[e.code]||('Error: '+e.code);
+  }
+}
+async function doLogout(){
+  try{ await auth.signOut(); }catch(e){}
+  localStorage.removeItem('aca_user');
+  loggedInUser='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent='';
+  showLoginScreen();
+}
+document.addEventListener('DOMContentLoaded',function(){
+  auth.onAuthStateChanged(function(user){
+    if(user){ showApp(user.email); }
+    else{ showLoginScreen(); }
+  });
+});
+
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
@@ -1274,150 +1419,7 @@ window.setBkMonth=setBkMonth;window.toggleBkExpand=toggleBkExpand;window.selectB
 window.setInqFilter=setInqFilter; window.setInqStatus=setInqStatus; window.deleteInq=deleteInq;
 
 
-  <!-- DASHBOARD -->
-  <div class="screen" id="screen-dashboard">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-header-row">
-        <div class="pg-title" id="dashGreeting">Dashboard</div>
-        <button class="sign-out-btn" onclick="doLogout()">Sign out</button>
-      </div>
-    </div>
-    <div id="dashContent"></div>
-  </div>
 
-  <!-- ATTENDANCE -->
-  <div class="screen" id="screen-attendance">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-header-row">
-        <div class="pg-title">Attendance</div>
-        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
-      </div>
-      <div class="date-nav">
-        <button class="date-nav-btn" onclick="changeDate(-1)">&#8249;</button>
-        <div id="dateLabel"></div>
-        <button class="date-nav-btn" id="nextDateBtn" onclick="changeDate(1)">&#8250;</button>
-      </div>
-    </div>
-    <div class="sess-tabs">
-      <div class="sess-tab active" onclick="switchSession('morning',this)">&#9728; Morning</div>
-      <div class="sess-tab" onclick="switchSession('evening',this)">&#127748; Evening</div>
-    </div>
-    <div class="sport-chips" id="sportChips"></div>
-    <div class="summary-grid">
-      <div class="sum-card total"><div class="sum-val" id="totalCount">0</div><div class="sum-label">Total</div></div>
-      <div class="sum-card present"><div class="sum-val" id="presentCount">0</div><div class="sum-label">Present</div></div>
-      <div class="sum-card absent"><div class="sum-val" id="absentCount">0</div><div class="sum-label">Absent</div></div>
-    </div>
-    <div class="list-area" id="studentList"></div>
-
-  </div>
-
-  <!-- PROFILES -->
-  <div class="screen" id="screen-profiles">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-header-row">
-        <div class="pg-title">Profiles</div>
-        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
-      </div>
-    </div>
-    <div class="search-bar">
-      <input class="search-input" placeholder="Search student or parent..." oninput="filterProfiles(this.value)" id="profileSearch"/>
-    </div>
-    <div class="filter-row" id="profileFilters"></div>
-    <div class="profile-list" id="profileList"></div>
-  </div>
-
-  <!-- INQUIRIES -->
-  <div class="screen" id="screen-inquiries">
-    <div class="pg-header">
-      <div class="pg-label">4A Sports Academy</div>
-      <div class="pg-header-row">
-        <div class="pg-title">Inquiries</div>
-        <button class="add-hdr-btn" onclick="openModal('addInquiry')">+ Add</button>
-      </div>
-    </div>
-    <div class="filter-row" id="inqFilters" style="padding:10px 16px;"></div>
-    <div class="inq-list" id="inquiryList"></div>
-  </div>
-
-</div>
-
-
-// ── FIREBASE SYNC ─────────────────────────────────────
-async function loadFromFirebase(){
-  try{
-    var results = await Promise.all([
-      fsGet('academy/attHistory'),
-      fsGet('academy/bookings'),
-      fsGet('academy/inquiries'),
-      fsGet('academy/meta')
-    ]);
-    var aS=results[0],bkS=results[1],iS=results[2],mS=results[3];
-    if(aS&&aS.data){ attHistory=JSON.parse(aS.data); }
-    if(bkS&&bkS.data){ bookings=JSON.parse(bkS.data); }
-    if(iS&&iS.data){ inquiries=JSON.parse(iS.data); }
-    if(mS&&mS.nextId){ nextId=mS.nextId; }
-    console.log('Firebase loaded: att='+attHistory.length+' bk='+bookings.length);
-  }catch(e){ console.warn('loadFromFirebase error:',e); }
-}
-function saveAll(){
-  localStorage.setItem('aca_attHistory',JSON.stringify(attHistory));
-  localStorage.setItem('aca_inquiries',JSON.stringify(inquiries));
-  localStorage.setItem('aca_nextid',JSON.stringify(nextId));
-  try{
-    fsSet('academy/attHistory',{data:JSON.stringify(attHistory)});
-    fsSet('academy/inquiries',{data:JSON.stringify(inquiries)});
-    fsSet('academy/meta',{nextId:nextId});
-  }catch(e){ console.warn('saveAll Firebase error:',e); }
-}
-function saveBkFirebase(){
-  try{ fsSet('academy/bookings',{data:JSON.stringify(bookings)}); }catch(e){}
-}
-// ── AUTH ──────────────────────────────────────────────
-function showApp(email){
-  loggedInUser=email.split('@')[0];
-  localStorage.setItem('aca_user',loggedInUser);
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
-  document.getElementById('bottomNav').style.display='flex';
-  loadFromFirebase().then(function(){ initApp(); });
-}
-function showLoginScreen(){
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('appShell').style.display='none';
-  document.getElementById('bottomNav').style.display='none';
-}
-async function doLogin(){
-  var email=document.getElementById('loginUser').value.trim();
-  var pass=document.getElementById('loginPass').value;
-  if(!email){document.getElementById('loginError').textContent='Please enter email.';return;}
-  if(!pass){document.getElementById('loginError').textContent='Please enter password.';return;}
-  document.getElementById('loginError').textContent='Signing in...';
-  try{
-    var result=await auth.signInWithEmailAndPassword(email,pass);
-    showApp(result.user.email);
-  }catch(e){
-    var msgs={'auth/invalid-email':'Invalid email.','auth/user-not-found':'No account found.','auth/wrong-password':'Wrong password.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts.'};
-    document.getElementById('loginError').textContent=msgs[e.code]||('Error: '+e.code);
-  }
-}
-async function doLogout(){
-  try{ await auth.signOut(); }catch(e){}
-  localStorage.removeItem('aca_user');
-  loggedInUser='';
-  document.getElementById('loginPass').value='';
-  document.getElementById('loginError').textContent='';
-  showLoginScreen();
-}
-document.addEventListener('DOMContentLoaded',function(){
-  auth.onAuthStateChanged(function(user){
-    if(user){ showApp(user.email); }
-    else{ showLoginScreen(); }
-  });
-});
 </script>
 </body>
 </html>
