@@ -9,7 +9,7 @@
 html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EFEFEF;color:#111;-webkit-tap-highlight-color:transparent;overflow-x:hidden;margin:0;padding:0;}
 
 /* LOGIN */
-#loginScreen{display:none!important;position:fixed;inset:0;background:#fff;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
+#loginScreen{display:flex;position:fixed;inset:0;background:#fff;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
 .login-logo{width:72px;height:72px;background:#111;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:1.5rem;}
 .login-title{font-size:26px;font-weight:700;color:#111;margin-bottom:4px;}
 .login-sub{font-size:14px;color:#bbb;margin-bottom:2rem;}
@@ -274,9 +274,6 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 .btn-cancel{flex:1;padding:13px;border:1.5px solid #eee;border-radius:12px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;color:#aaa;}
 .btn-save{flex:2;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
 </style>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -333,7 +330,10 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
   <div class="modal" id="modalContent"></div>
 </div>
 
-<script defer>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script>
 const QUOTES=['Great things take time.','Discipline is the bridge.','Push your limits!','Train hard, win easy.','Champions keep going.','Every rep counts.','Success is earned.','Be consistent!','No shortcuts.','Believe and achieve.'];
 const ALL_SPORTS=['Football','Basketball','Cricket'];
 const BATCHES={morning:['Football','Basketball','Cricket'],evening:['Football','Basketball','Cricket']};
