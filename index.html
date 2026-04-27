@@ -453,10 +453,23 @@ function saveAllSkills(id,sess,sp){
 function showApp(email){
   loggedInUser=email.split('@')[0];
   localStorage.setItem('aca_user',loggedInUser);
+  localStorage.removeItem('aca_attHistory');
+  localStorage.removeItem('aca_bookings');
+  localStorage.removeItem('aca_inquiries');
+  localStorage.removeItem('aca_nextid');
   document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
-  document.getElementById('bottomNav').style.display='flex';
-  loadFromFirebase().then(function(){initApp();});
+  var loader=document.createElement('div');
+  loader.id='fbLoader';
+  loader.style.cssText='position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;font-family:-apple-system,sans-serif;';
+  loader.innerHTML='<div style="font-size:48px;margin-bottom:16px;">🏆</div><div style="font-size:16px;font-weight:600;color:#111;">Loading...</div>';
+  document.body.appendChild(loader);
+  loadFromFirebase().then(function(){
+    var l=document.getElementById('fbLoader');
+    if(l) l.remove();
+    document.getElementById('appShell').style.display='block';
+    document.getElementById('bottomNav').style.display='flex';
+    initApp();
+  });
 }
 function showLoginScreen(){
   document.getElementById('loginScreen').style.display='flex';
