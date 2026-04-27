@@ -324,6 +324,78 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 <div id="reportCardView">
   <div id="reportCardContent"></div>
   <button class="rc-close-btn" onclick="closeReportCard()">Close Report Card</button>
+</div></body>
+</html>
+
+  <!-- DASHBOARD -->
+  <div class="screen" id="screen-dashboard">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title" id="dashGreeting">Dashboard</div>
+        <button class="sign-out-btn" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+    <div id="dashContent"></div>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div class="screen" id="screen-attendance">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Attendance</div>
+        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
+      </div>
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="changeDate(-1)">&#8249;</button>
+        <div id="dateLabel"></div>
+        <button class="date-nav-btn" id="nextDateBtn" onclick="changeDate(1)">&#8250;</button>
+      </div>
+    </div>
+    <div class="sess-tabs">
+      <div class="sess-tab active" onclick="switchSession('morning',this)">&#9728; Morning</div>
+      <div class="sess-tab" onclick="switchSession('evening',this)">&#127748; Evening</div>
+    </div>
+    <div class="sport-chips" id="sportChips"></div>
+    <div class="summary-grid">
+      <div class="sum-card total"><div class="sum-val" id="totalCount">0</div><div class="sum-label">Total</div></div>
+      <div class="sum-card present"><div class="sum-val" id="presentCount">0</div><div class="sum-label">Present</div></div>
+      <div class="sum-card absent"><div class="sum-val" id="absentCount">0</div><div class="sum-label">Absent</div></div>
+    </div>
+    <div class="list-area" id="studentList"></div>
+
+  </div>
+
+  <!-- PROFILES -->
+  <div class="screen" id="screen-profiles">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Profiles</div>
+        <button class="add-hdr-btn" onclick="openModal('addStudent')">+ Add</button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" placeholder="Search student or parent..." oninput="filterProfiles(this.value)" id="profileSearch"/>
+    </div>
+    <div class="filter-row" id="profileFilters"></div>
+    <div class="profile-list" id="profileList"></div>
+  </div>
+
+  <!-- INQUIRIES -->
+  <div class="screen" id="screen-inquiries">
+    <div class="pg-header">
+      <div class="pg-label">4A Sports Academy</div>
+      <div class="pg-header-row">
+        <div class="pg-title">Inquiries</div>
+        <button class="add-hdr-btn" onclick="openModal('addInquiry')">+ Add</button>
+      </div>
+    </div>
+    <div class="filter-row" id="inqFilters" style="padding:10px 16px;"></div>
+    <div class="inq-list" id="inquiryList"></div>
+  </div>
+
 </div>
 
 <!-- MODAL -->
@@ -336,14 +408,21 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
 <script>
-
 const firebaseConfig={apiKey:"AIzaSyAgMtGO7X52sFQVX6hRZUFObBslzZIfEk4",authDomain:"a-sports-academy.firebaseapp.com",projectId:"a-sports-academy",storageBucket:"a-sports-academy.firebasestorage.app",messagingSenderId:"960624783327",appId:"1:960624783327:web:e173748c36596c4ea11e6a"};
 const firebaseApp=firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const auth=firebase.auth();
-
-
-
+async function fsSet(path,data){try{var p=path.split('/');await db.collection(p[0]).doc(p[1]).set(data,{merge:true});}catch(e){}}
+async function fsGet(path){try{var p=path.split('/');var s=await db.collection(p[0]).doc(p[1]).get();return s.exists?s.data():null;}catch(e){return null;}}
+async function loadFromFirebase(){
+  try{
+    var r=await Promise.all([fsGet('academy/attHistory'),fsGet('academy/bookings'),fsGet('academy/inquiries'),fsGet('academy/meta')]);
+    if(r[0]&&r[0].data) attHistory=JSON.parse(r[0].data);
+    if(r[1]&&r[1].data) bookings=JSON.parse(r[1].data);
+    if(r[2]&&r[2].data) inquiries=JSON.parse(r[2].data);
+    if(r[3]&&r[3].nextId) nextId=r[3].nextId;
+  }catch(e){console.warn('Firebase load error:',e);}
+}
 function saveAll(){
   localStorage.setItem('aca_attHistory',JSON.stringify(attHistory));
   localStorage.setItem('aca_inquiries',JSON.stringify(inquiries));
@@ -352,7 +431,10 @@ function saveAll(){
   fsSet('academy/inquiries',{data:JSON.stringify(inquiries)});
   fsSet('academy/meta',{nextId:nextId});
 }
-
+function saveBk(){
+  localStorage.setItem('aca_bookings',JSON.stringify(bookings));
+  fsSet('academy/bookings',{data:JSON.stringify(bookings)});
+}
 function showApp(email){
   loggedInUser=email.split('@')[0];
   localStorage.setItem('aca_user',loggedInUser);
@@ -400,30 +482,6 @@ const QUOTES=['Great things take time.','Discipline is the bridge.','Push your l
 const ALL_SPORTS=['Football','Basketball','Cricket'];
 const BATCHES={morning:['Football','Basketball','Cricket'],evening:['Football','Basketball','Cricket']};
 
-
-async function fsSet(path, data){
-  try{ const p=path.split('/'); await db.collection(p[0]).doc(p[1]).set(data,{merge:true}); return true; }
-  catch(e){ console.warn('fsSet error:',e); return false; }
-}
-async function fsGet(path){
-  try{ const p=path.split('/'); const s=await db.collection(p[0]).doc(p[1]).get(); return s.exists?s.data():null; }
-  catch(e){ console.warn('fsGet error:',e); return null; }
-}
-async function loadFromFirebase(){
-  try{
-    const [aS,bkS,iS,mS]=await Promise.all([
-      fsGet('academy/attHistory'),
-      fsGet('academy/bookings'),
-      fsGet('academy/inquiries'),
-      fsGet('academy/meta')
-    ]);
-    if(aS&&aS.data){ attHistory=JSON.parse(aS.data); }
-    if(bkS&&bkS.data){ bookings=JSON.parse(bkS.data); }
-    if(iS&&iS.data){ inquiries=JSON.parse(iS.data); }
-    if(mS&&mS.nextId){ nextId=mS.nextId; }
-    return true;
-  }catch(e){ console.warn('loadFromFirebase error:',e); return false; }
-}
 async function saveToFirebase(){
   try{
     await Promise.all([
@@ -479,10 +537,6 @@ const DEFAULT_BOOKINGS=[{"id":3001,"date":"2026-01-01","team":"","phone":"","tim
 let bookings=JSON.parse(localStorage.getItem('aca_bookings')||'null')||JSON.parse(JSON.stringify(DEFAULT_BOOKINGS));
 let bkMonthFilter='all';
 
-function saveBk(){
-  localStorage.setItem('aca_bookings',JSON.stringify(bookings));
-  try{ fsSet('academy/bookings',{data:JSON.stringify(bookings)}); }catch(e){}
-}
 
 function renderBkMonthFilter(){
   // Get unique months from bookings
@@ -1046,32 +1100,6 @@ function renderProfileDetailFull(){
 function updatePerf(id,sess,sp,field,val){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;ensurePerf(st)[field]=val;saveAll();}
 function rateStar(id,sess,sp,skill,val,mKey){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;const perf=ensurePerf(st);if(!perf.monthly[mKey])perf.monthly[mKey]={};perf.monthly[mKey][skill]=val;saveAll();renderProfileDetailFull();}
 function saveCoachNote(id,sess,sp,mKey,val){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;const perf=ensurePerf(st);if(!perf.monthly[mKey])perf.monthly[mKey]={};perf.monthly[mKey].note=val;saveAll();}
-function saveAllSkills(id,sess,sp){saveAll();const b=document.createElement('div');b.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#27ae60;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;';b.textContent='✓ Skills saved!';document.body.appendChild(b);setTimeout(()=>b.remove(),2000);}
-
-// ── REPORT CARD ────────────────────────────────────────
-function generateReportCard(){
-  const id=currentProfileId,sess=currentProfileSess,sp=currentProfileSport;
-  const st=(students[sess][sp]||[]).find(s=>s.id===id); if(!st)return;
-  const perf=ensurePerf(st); const cat=calcCategory(st.dob); const skills=SPORT_SKILLS[sp]||[];
-  let latestMonth=null,latestData=null;
-  for(let i=0;i<12;i++){const m=getMonthKey(i);if(perf.monthly[m]&&skills.some(s=>perf.monthly[m][s])){latestMonth=m;latestData=perf.monthly[m];break;}}
-  let totalScore=0,ratedCount=0;
-  if(latestData)skills.forEach(s=>{if(latestData[s]){totalScore+=latestData[s];ratedCount++;}});
-  const avg=ratedCount>0?(totalScore/ratedCount):0;
-  const avgPct=Math.round(avg/5*100);
-  const grade=avgPct>=90?'A+':avgPct>=80?'A':avgPct>=70?'B+':avgPct>=60?'B':avgPct>=50?'C':'D';
-  const gradeColor=avgPct>=70?'#27ae60':avgPct>=50?'#e67e22':'#e74c3c';
-  const skillBars=skills.map(skill=>{const val=latestData?latestData[skill]||0:0;const pct=Math.round(val/5*100);const color=pct>=80?'#27ae60':pct>=60?'#e67e22':pct>=40?'#2980b9':'#eee';return`<div class="rc-skill-item"><div class="rc-skill-label"><span>${skill}</span><span>${val>0?val+'/5':'Not rated'}</span></div><div class="rc-track"><div class="rc-fill" style="width:${pct}%;background:${color};"></div></div></div>`;}).join('');
-  const note=latestData?latestData.note||'':'';
-  const period=latestMonth?fmtMonthKey(latestMonth):'No data yet';
-  document.getElementById('reportCardContent').innerHTML=`
-    <div class="rc-header"><div class="rc-logo">🏆</div><div class="rc-academy">4A Sports Academy</div><div class="rc-title">Player Report Card</div><div class="rc-period">${period}</div></div>
-    <div class="rc-student-block"><div class="rc-avatar">${initials(st.studName||st.name)}</div><div><div class="rc-stud-name">${st.studName||'—'}</div><div class="rc-stud-sub">${sess==='morning'?'Morning':'Evening'} · ${sp}</div><div class="rc-stud-sub">Parent: ${st.name}</div>${cat?`<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${cat.bg};color:${cat.color};margin-top:4px;display:inline-block;">${cat.label}</span>`:''}</div></div>
-    ${ratedCount>0?`<div class="rc-overall"><div class="rc-overall-num">${avg.toFixed(1)}<span style="font-size:20px;">/5</span></div><div class="rc-overall-label">Overall Score</div><div class="rc-grade" style="color:${gradeColor};">Grade: ${grade}</div></div><div class="rc-skill-block"><div class="rc-skill-title">Skills Breakdown</div>${skillBars}</div>`:'<div style="text-align:center;padding:2rem;color:#bbb;font-size:14px;">Rate skills in the Skills tab first.</div>'}
-    ${note?`<div class="rc-note"><div class="rc-note-label">Coach Notes</div><div class="rc-note-text">${note}</div></div>`:''}
-    <div style="margin:0 16px 12px;padding:14px;background:#fff;border:1px solid #eee;border-radius:14px;font-size:12px;color:#bbb;text-align:center;">Generated by 4A Sports Academy · ${new Date().toLocaleDateString('en-IN')}</div>`;
-  document.getElementById('reportCardView').style.display='block';
-}
 function closeReportCard(){document.getElementById('reportCardView').style.display='none';}
 
 // ── INQUIRIES ──────────────────────────────────────────
