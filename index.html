@@ -9,7 +9,7 @@
 html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EFEFEF;color:#111;-webkit-tap-highlight-color:transparent;overflow-x:hidden;margin:0;padding:0;}
 
 /* LOGIN */
-#loginScreen{display:flex;position:fixed;inset:0;background:#fff;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
+#loginScreen{display:none!important;position:fixed;inset:0;background:#fff;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:200;}
 .login-logo{width:72px;height:72px;background:#111;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:1.5rem;}
 .login-title{font-size:26px;font-weight:700;color:#111;margin-bottom:4px;}
 .login-sub{font-size:14px;color:#bbb;margin-bottom:2rem;}
@@ -19,12 +19,12 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 .login-error{font-size:13px;color:#e74c3c;margin-top:10px;min-height:18px;text-align:center;}
 
 /* APP SHELL */
-#appShell{display:none;padding-bottom:72px;}
+#appShell{display:block;padding-bottom:72px;}
 .screen{display:none;}
 .screen.active{display:block;}
 
 /* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:none;z-index:50;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;z-index:50;}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;cursor:pointer;color:#ccc;font-size:10px;font-weight:600;gap:3px;border:none;background:none;letter-spacing:0.02em;}
 .nav-item.active{color:#111;}
 .nav-icon{font-size:22px;line-height:1;}
@@ -281,7 +281,7 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen">
+<div id="loginScreen" style="display:none!important;height:0;overflow:hidden;">
   <div class="login-logo">🏆</div>
   <div class="login-title">4A Sports Academy</div>
   <div class="login-sub">Admin Portal</div>
@@ -309,7 +309,7 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
   </div>
 
 <!-- BOTTOM NAV -->
-<div class="bottom-nav" id="bottomNav" style="display:none;">
+<div class="bottom-nav" id="bottomNav" style="display:flex;">
   <button class="nav-item" id="nav-dashboard" onclick="showScreen('dashboard')"><span class="nav-icon">&#8962;</span>Home</button>
   <button class="nav-item" id="nav-attendance" onclick="showScreen('attendance')"><span class="nav-icon">&#10003;</span>Attend</button>
   <button class="nav-item" id="nav-profiles" onclick="showScreen('profiles')"><span class="nav-icon">&#128100;</span>Profiles</button>
@@ -401,6 +401,8 @@ let loggedInUser=localStorage.getItem('aca_user')||'';
 let session='morning',sport='Football',expandedId=null;
 let profileFilter='All',inqFilter='all',profileSearchTerm='';
 let workingState={};
+let inactiveStudents=JSON.parse(localStorage.getItem('aca_inactive')||'{}');
+let expandedAttId=null;
 let currentProfileId=null,currentProfileSess=null,currentProfileSport=null,profileViewTab='info',selectedMonth=null;
 let selDate=new Date(); selDate.setHours(0,0,0,0);
 const todayDate=new Date(); todayDate.setHours(0,0,0,0);
@@ -566,7 +568,20 @@ function saveEditBk(id){
 }
 
 // ── LOGIN ──────────────────────────────────────────────
-
+async function doLogin(){
+  const email=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!email){document.getElementById('loginError').textContent='Please enter email.';return;}
+  if(!pass){document.getElementById('loginError').textContent='Please enter password.';return;}
+  document.getElementById('loginError').textContent='Signing in...';
+  try{ await signInWithEmailAndPassword(auth,email,pass); }
+  catch(e){
+    const msg={'auth/invalid-email':'Invalid email.','auth/user-not-found':'No account found.','auth/wrong-password':'Wrong password.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts. Try later.','auth/network-request-failed':'Network error.'}[e.code]||'Error: '+e.code;
+    document.getElementById('loginError').textContent=msg;
+  }
+}
+async function doLogout(){await signOut(auth);localStorage.removeItem('aca_user');loggedInUser='';}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 function initApp(){
   renderDashboard();updateDateDisplay();renderSportChips();renderStudents();
@@ -700,39 +715,130 @@ function getWS(){
   return workingState[k];
 }
 
+function getMonthAttCount(studId){
+  var dk=dateKey(selDate);
+  var monthKey=dk.slice(0,7);
+  var attended=0;
+  var total=0;
+  attHistory.forEach(function(h){
+    if(h.date.startsWith(monthKey)&&h.session===session&&h.sport===sport){
+      total++;
+      var s=h.students.find(function(x){return x.id===studId;});
+      if(s&&s.present) attended++;
+    }
+  });
+  return {attended:attended,total:total};
+}
+function getBatchKey(){return wsKey();}
+function isInactiveSt(id){
+  var bk=getBatchKey();
+  return (inactiveStudents[bk]||[]).indexOf(id)!==-1;
+}
+function removeFromBatch(id){
+  var bk=getBatchKey();
+  if(!inactiveStudents[bk]) inactiveStudents[bk]=[];
+  if(!isInactiveSt(id)) inactiveStudents[bk].push(id);
+  localStorage.setItem('aca_inactive',JSON.stringify(inactiveStudents));
+  expandedAttId=null;
+  renderStudents();
+}
+function setActive(id){
+  var bk=getBatchKey();
+  if(inactiveStudents[bk]){
+    inactiveStudents[bk]=inactiveStudents[bk].filter(function(x){return x!==id;});
+    localStorage.setItem('aca_inactive',JSON.stringify(inactiveStudents));
+  }
+  renderStudents();
+}
+function toggleAttExpand(id){
+  expandedAttId=expandedAttId===id?null:id;
+  renderStudents();
+}
+function toggleInactiveView(){
+  var btn=document.getElementById('inactiveToggle');
+  var list=document.getElementById('inactiveList');
+  if(!list) return;
+  var showing=list.style.display!=='none';
+  list.style.display=showing?'none':'block';
+  if(btn) btn.textContent=showing?'Show Inactive':'Hide Inactive';
+}
 function renderStudents(){
-  var merged=getWS();
-  var list=merged;
-  var pCount=merged.filter(function(s){return s.present;}).length;
-  document.getElementById('totalCount').textContent=list.length;
+  var allStudents=getWS();
+  var bk=getBatchKey();
+  var inactive=inactiveStudents[bk]||[];
+  var active=allStudents.filter(function(s){return inactive.indexOf(s.id)===-1;});
+  var inactiveList=allStudents.filter(function(s){return inactive.indexOf(s.id)!==-1;});
+
+  var pCount=active.filter(function(s){return s.present;}).length;
+  document.getElementById('totalCount').textContent=active.length;
   document.getElementById('presentCount').textContent=pCount;
-  document.getElementById('absentCount').textContent=list.length-pCount;
+  document.getElementById('absentCount').textContent=active.length-pCount;
+
   var html='';
-  merged.forEach(function(st){
+
+  // Active students
+  active.forEach(function(st){
     var p=st.present;
     var cleanPhone=(st.phone||'').replace(/[^0-9]/g,'');
-    var callBtn=(!p&&cleanPhone)?'<a class="call-link" href="tel:'+cleanPhone+'" onclick="event.stopPropagation()">&#128222;</a>':'';
+    var isOpen=expandedAttId===st.id;
+    var ini=initials(st.studName||st.name);
+
     html+='<div class="s-card">';
-    // Main row - click avatar/name to go to profile
-    html+='<div class="s-row">';
-    html+='<div onclick="goToProfile('+st.id+',&quot;'+session+'&quot;,&quot;'+sport+'&quot;)" style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;">';
-    html+='<div class="avatar">'+initials(st.studName||st.name)+'</div>';
+    // Main row
+    html+='<div class="s-row" onclick="toggleAttExpand('+st.id+')" style="cursor:pointer;">';
+    html+='<div style="display:flex;align-items:center;gap:12px;flex:1;">';
+    html+='<div class="avatar">'+ini+'</div>';
     html+='<div class="s-info"><div class="s-name">'+(st.studName||'&#8212;')+'</div><div class="s-sub">'+(st.dob||'')+'</div></div>';
     html+='</div>';
-    html+='<div class="btn-group">'+callBtn;
+    html+='<div class="btn-group">';
+    if(!p&&cleanPhone) html+='<a class="call-link" href="tel:'+cleanPhone+'" onclick="event.stopPropagation()">&#128222;</a>';
     html+='<button class="pa-btn '+(p?'p':'a')+'" onclick="event.stopPropagation();togglePresent('+st.id+')">'+(p?'P':'A')+'</button>';
     html+='</div></div>';
-    // Comment field - only show when absent
+
+    // Comment field when absent
     if(!p){
       var lastComment=getLastComment(st.id);
-      html+='<div style="padding:0 14px 12px;display:flex;gap:8px;align-items:center;">';
+      html+='<div style="padding:0 14px 10px;display:flex;gap:8px;align-items:center;">';
       html+='<input type="text" id="comment_'+st.id+'" placeholder="'+(lastComment?lastComment:'Reason for absence (optional)')+'" value="'+(st.comment||'')+'" onblur="doneComment('+st.id+')" style="flex:1;padding:9px 12px;border:1.5px solid #eee;border-radius:10px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#111;"/>';
-      
+      html+='</div>';
+    }
+
+    // Expanded panel
+    if(isOpen){
+      var mc=getMonthAttCount(st.id);
+      html+='<div style="border-top:1px solid #f5f5f5;padding:12px 14px;">';
+      // Attendance count
+      html+='<div style="background:#f8f8f8;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">';
+      html+='<span style="font-size:13px;color:#555;font-weight:600;">This month</span>';
+      html+='<span style="font-size:15px;font-weight:700;color:#111;">'+mc.attended+' / '+mc.total+' days</span>';
+      html+='</div>';
+      // Actions
+      html+='<div style="display:flex;gap:8px;">';
+      html+='<button onclick="goToProfile('+st.id+',&quot;'+session+'&quot;,&quot;'+sport+'&quot;)" style="flex:1;padding:10px;background:#f0f0ee;color:#111;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">&#128100; View Profile</button>';
+      html+='<button onclick="removeFromBatch('+st.id+')" style="flex:1;padding:10px;background:#fdecea;color:#e74c3c;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">&#10005; Remove</button>';
+      html+='</div>';
       html+='</div>';
     }
     html+='</div>';
   });
-  
+
+  // Inactive toggle
+  if(inactiveList.length>0){
+    html+='<div id="inactiveToggle" onclick="toggleInactiveView()" style="text-align:center;padding:12px;font-size:13px;color:#2980b9;font-weight:600;cursor:pointer;">&#9660; Show Inactive ('+inactiveList.length+')</div>';
+    html+='<div id="inactiveList" style="display:none;">';
+    inactiveList.forEach(function(st){
+      html+='<div class="s-card" style="opacity:0.5;">';
+      html+='<div class="s-row">';
+      html+='<div style="display:flex;align-items:center;gap:12px;flex:1;">';
+      html+='<div class="avatar">'+initials(st.studName||st.name)+'</div>';
+      html+='<div class="s-info"><div class="s-name">'+(st.studName||'&#8212;')+'</div><div class="s-sub">Inactive</div></div>';
+      html+='</div>';
+      html+='<button onclick="setActive('+st.id+')" style="padding:8px 14px;background:#27ae60;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;">Set Active</button>';
+      html+='</div></div>';
+    });
+    html+='</div>';
+  }
+
   document.getElementById('studentList').innerHTML=html;
 }
 
@@ -908,18 +1014,6 @@ function renderProfileDetailFull(){
 function updatePerf(id,sess,sp,field,val){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;ensurePerf(st)[field]=val;saveAll();}
 function rateStar(id,sess,sp,skill,val,mKey){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;const perf=ensurePerf(st);if(!perf.monthly[mKey])perf.monthly[mKey]={};perf.monthly[mKey][skill]=val;saveAll();renderProfileDetailFull();}
 function saveCoachNote(id,sess,sp,mKey,val){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;const perf=ensurePerf(st);if(!perf.monthly[mKey])perf.monthly[mKey]={};perf.monthly[mKey].note=val;saveAll();}
-function saveAll(){
-  localStorage.setItem('aca_attHistory',JSON.stringify(attHistory));
-  localStorage.setItem('aca_inquiries',JSON.stringify(inquiries));
-  localStorage.setItem('aca_nextid',JSON.stringify(nextId));
-  // Save to Firebase for cross-device sync
-  try{
-    fsSet('academy/attHistory',{data:JSON.stringify(attHistory)});
-    fsSet('academy/inquiries',{data:JSON.stringify(inquiries)});
-    fsSet('academy/meta',{nextId:nextId});
-  }catch(e){ console.warn('Firebase save error:',e); }
-}
-
 function saveAllSkills(id,sess,sp){saveAll();const b=document.createElement('div');b.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#27ae60;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;';b.textContent='✓ Skills saved!';document.body.appendChild(b);setTimeout(()=>b.remove(),2000);}
 
 // ── REPORT CARD ────────────────────────────────────────
@@ -1186,64 +1280,12 @@ function saveEditFee(id,sess,sp){
 }
 
 // ── EXPOSE TO WINDOW ───────────────────────────────────
-// ── FIREBASE AUTH ────────────────────────────────────
-function showApp(email){
-  loggedInUser = email.split('@')[0];
-  localStorage.setItem('aca_user', loggedInUser);
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
-  document.getElementById('bottomNav').style.display='flex';
-  loadFromFirebase().then(function(){ initApp(); });
-}
-
-function showLoginScreen(){
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('appShell').style.display='none';
-  document.getElementById('bottomNav').style.display='none';
-}
-
-async function doLogin(){
-  var email=document.getElementById('loginUser').value.trim();
-  var pass=document.getElementById('loginPass').value;
-  if(!email){document.getElementById('loginError').textContent='Please enter email.';return;}
-  if(!pass){document.getElementById('loginError').textContent='Please enter password.';return;}
-  document.getElementById('loginError').textContent='Signing in...';
-  try{
-    var result = await auth.signInWithEmailAndPassword(email, pass);
-    showApp(result.user.email);
-  }catch(e){
-    var msgs={
-      'auth/invalid-email':'Invalid email.',
-      'auth/user-not-found':'No account found.',
-      'auth/wrong-password':'Wrong password.',
-      'auth/invalid-credential':'Wrong email or password.',
-      'auth/too-many-requests':'Too many attempts. Try later.',
-      'auth/network-request-failed':'Network error.'
-    };
-    document.getElementById('loginError').textContent = msgs[e.code]||('Error: '+e.code);
-  }
-}
-
-async function doLogout(){
-  try{ await auth.signOut(); }catch(e){}
-  localStorage.removeItem('aca_user');
-  loggedInUser='';
-  document.getElementById('loginPass').value='';
-  document.getElementById('loginError').textContent='';
-  showLoginScreen();
-}
-
-// Check auth state on load
-document.addEventListener('DOMContentLoaded', function(){
-  auth.onAuthStateChanged(function(user){
-    if(user){ showApp(user.email); }
-    else{ showLoginScreen(); }
-  });
-});
-
+// Auto init
+loggedInUser = localStorage.getItem('aca_user')||'admin';
+document.addEventListener('DOMContentLoaded', function(){ initApp(); });
 window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
-window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;
+window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.removeFromBatch=removeFromBatch;window.setActive=setActive;window.toggleAttExpand=toggleAttExpand;window.toggleInactiveView=toggleInactiveView;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;
 window.toggleExpand=toggleExpand; window.saveAttendance=saveAttendance;
 window.openModal=openModal; window.closeModal=closeModal;
 window.addStudent=addStudent; window.addInquiry=addInquiry;
