@@ -444,6 +444,11 @@ function initApp(){
 function showApp(email){
   loggedInUser=email.split('@')[0];
   localStorage.setItem('aca_user',loggedInUser);
+  // Clear stale cache so Firebase is always source of truth
+  localStorage.removeItem('aca_attHistory');
+  localStorage.removeItem('aca_bookings');
+  localStorage.removeItem('aca_inquiries');
+  localStorage.removeItem('aca_nextid');
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appShell').style.display='block';
   document.getElementById('bottomNav').style.display='flex';
