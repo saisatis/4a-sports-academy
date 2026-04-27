@@ -400,17 +400,6 @@ const QUOTES=['Great things take time.','Discipline is the bridge.','Push your l
 const ALL_SPORTS=['Football','Basketball','Cricket'];
 const BATCHES={morning:['Football','Basketball','Cricket'],evening:['Football','Basketball','Cricket']};
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAgMtGO7X52sFQVX6hRZUFObBslzZIfEk4",
-  authDomain: "a-sports-academy.firebaseapp.com",
-  projectId: "a-sports-academy",
-  storageBucket: "a-sports-academy.firebasestorage.app",
-  messagingSenderId: "960624783327",
-  appId: "1:960624783327:web:e173748c36596c4ea11e6a"
-};
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
 
 async function fsSet(path, data){
   try{ const p=path.split('/'); await db.collection(p[0]).doc(p[1]).set(data,{merge:true}); return true; }
