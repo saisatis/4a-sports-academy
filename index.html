@@ -423,6 +423,8 @@ async function loadFromFirebase(){
     if(r[3]&&r[3].nextId) nextId=r[3].nextId;
     if(r[4]&&r[4].data) inactiveStudents=JSON.parse(r[4].data);
   }catch(e){console.warn('Firebase load error:',e);}
+  // Clear working state cache so fresh Firebase data is used
+  workingState={};
 }
 function saveAll(){
   localStorage.setItem('aca_attHistory',JSON.stringify(attHistory));
