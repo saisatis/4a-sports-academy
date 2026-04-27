@@ -908,6 +908,18 @@ function renderProfileDetailFull(){
 function updatePerf(id,sess,sp,field,val){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;ensurePerf(st)[field]=val;saveAll();}
 function rateStar(id,sess,sp,skill,val,mKey){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;const perf=ensurePerf(st);if(!perf.monthly[mKey])perf.monthly[mKey]={};perf.monthly[mKey][skill]=val;saveAll();renderProfileDetailFull();}
 function saveCoachNote(id,sess,sp,mKey,val){const st=(students[sess][sp]||[]).find(s=>s.id===id);if(!st)return;const perf=ensurePerf(st);if(!perf.monthly[mKey])perf.monthly[mKey]={};perf.monthly[mKey].note=val;saveAll();}
+function saveAll(){
+  localStorage.setItem('aca_attHistory',JSON.stringify(attHistory));
+  localStorage.setItem('aca_inquiries',JSON.stringify(inquiries));
+  localStorage.setItem('aca_nextid',JSON.stringify(nextId));
+  // Save to Firebase for cross-device sync
+  try{
+    fsSet('academy/attHistory',{data:JSON.stringify(attHistory)});
+    fsSet('academy/inquiries',{data:JSON.stringify(inquiries)});
+    fsSet('academy/meta',{nextId:nextId});
+  }catch(e){ console.warn('Firebase save error:',e); }
+}
+
 function saveAllSkills(id,sess,sp){saveAll();const b=document.createElement('div');b.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#27ae60;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;';b.textContent='✓ Skills saved!';document.body.appendChild(b);setTimeout(()=>b.remove(),2000);}
 
 // ── REPORT CARD ────────────────────────────────────────
