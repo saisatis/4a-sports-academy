@@ -790,6 +790,7 @@ function selectSport(s){sport=s;expandedId=null;renderSportChips();renderStudent
 function wsKey(){return dateKey(selDate)+'_'+session+'_'+sport;}
 function getStudentsForDate(){
   var dk = dateKey(selDate);
+  // Check if saved record exists for this date
   var saved = attHistory.find(function(h){
     return h.date===dk && h.session===session && h.sport===sport;
   });
@@ -798,30 +799,51 @@ function getStudentsForDate(){
       return {id:s.id,studName:s.studName||'',name:s.studName||'',phone:'',dob:'',present:s.present,comment:s.comment||''};
     });
   }
-  // No saved data - use latest month students
-  var monthKey = dk.slice(0,7);
-  var mData = PER_MONTH_STUDENTS[monthKey];
+  // No record for this date - use most recent past record, all present
+  var recent=attHistory.filter(function(h){
+    return h.session===session&&h.sport===sport&&h.date<dk;
+  }).sort(function(a,b){return b.date.localeCompare(a.date);})[0];
+  if(recent&&recent.students&&recent.students.length>0){
+    return recent.students.map(function(s){
+      return {id:s.id,studName:s.studName||'',name:s.studName||'',phone:'',dob:'',present:true,comment:''};
+    });
+  }
+  // Final fallback - PER_MONTH_STUDENTS
+  var monthKey=dk.slice(0,7);
+  var mData=PER_MONTH_STUDENTS[monthKey];
   if(!mData){
-    // Find latest available month
-    var keys = Object.keys(PER_MONTH_STUDENTS).sort().reverse();
-    mData = PER_MONTH_STUDENTS[keys[0]];
+    var keys=Object.keys(PER_MONTH_STUDENTS).sort().reverse();
+    mData=PER_MONTH_STUDENTS[keys[0]];
   }
-  if(sport==='Basketball'){
-    var bkey = session+'_bball';
-    return (mData&&mData[bkey])||[];
-  }
+  if(sport==='Basketball') return (mData&&mData[session+'_bball'])||[];
   return (mData&&mData[session])||[];
 }
 
+function getStudentPhone(id){
+  var allSess=['morning','evening'];
+  var allSp=['Football','Basketball','Cricket'];
+  for(var i=0;i<allSess.length;i++){
+    for(var j=0;j<allSp.length;j++){
+      var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
+      var f=l.find(function(s){return s.id===id;});
+      if(f&&f.phone) return f.phone;
+      var dl=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]])||[];
+      var df=dl.find(function(s){return s.id===id;});
+      if(df&&df.phone) return df.phone;
+    }
+  }
+  return '';
+}
 function getWS(){
   var k=wsKey();
   if(!workingState[k]){
     var monthList=getStudentsForDate();
     workingState[k]=monthList.map(function(st){
+      var phone=st.phone||getStudentPhone(st.id)||'';
       return {
         id:st.id,
         studName:st.studName||st.name||'',
-        phone:st.phone||'',
+        phone:phone,
         dob:st.dob||'',
         present:st.present!==undefined?st.present:true,
         comment:st.comment||''
@@ -851,12 +873,22 @@ function isInactiveSt(id){
   return (inactiveStudents[bk]||[]).indexOf(id)!==-1;
 }
 function removeFromBatch(id){
+  var ws=getWS();
+  var st=ws.find(function(s){return s.id===id;});
+  var name=st?(st.studName||'this student'):'this student';
+  if(!confirm('Remove '+name+' from attendance?\nThey will stay in Profiles.')) return;
+  // Remove from all future attHistory records
+  var dk=dateKey(selDate);
+  attHistory.forEach(function(h){
+    if(h.session===session&&h.sport===sport&&h.date>=dk){
+      h.students=h.students.filter(function(s){return s.id!==id;});
+    }
+  });
+  // Also remove from workingState
   var bk=getBatchKey();
-  if(!inactiveStudents[bk]) inactiveStudents[bk]=[];
-  if(!isInactiveSt(id)) inactiveStudents[bk].push(id);
-  localStorage.setItem('aca_inactive',JSON.stringify(inactiveStudents));
-  fsSet('academy/inactive',{data:JSON.stringify(inactiveStudents)});
+  workingState[bk]=workingState[bk]?workingState[bk].filter(function(s){return s.id!==id;}):[];
   expandedAttId=null;
+  saveAll();
   renderStudents();
 }
 function setActive(id){
@@ -1011,9 +1043,8 @@ function saveAttendance(){
   attHistory.push({date:dk,session,sport,students:ws.map(x=>({...x}))});
   attHistory.sort((a,b)=>b.date.localeCompare(a.date));
   saveAll();
-  const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('savedBadge').textContent='✓ Saved at '+t;
-  setTimeout(()=>{document.getElementById('savedBadge').textContent='';},4000);
+  var badge=document.getElementById('savedBadge');
+  if(badge){var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});badge.textContent='✓ Saved at '+t;setTimeout(function(){badge.textContent='';},4000);}
   renderStudents();
 }
 
@@ -1232,8 +1263,7 @@ function addStudent(){
   var feeAmt=parseInt(document.getElementById('newFeeAmt').value)||2000;
   var feeType=document.getElementById('newFeeType').value;
   if(!studName){alert('Please enter student name.');return;}
-
-  // Check if old or new student
+  // Check if existing student
   var existSt=null;
   var allSess=['morning','evening'];
   var allSp=['Football','Basketball','Cricket'];
@@ -1241,9 +1271,12 @@ function addStudent(){
     for(var j=0;j<allSp.length&&!existSt;j++){
       var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
       existSt=l.find(function(s){return (s.studName||'').toLowerCase()===studName.toLowerCase();});
+      if(!existSt){
+        var dl=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]])||[];
+        existSt=dl.find(function(s){return (s.studName||'').toLowerCase()===studName.toLowerCase();});
+      }
     }
   }
-
   var sid;
   if(existSt){
     sid=existSt.id;
@@ -1252,29 +1285,23 @@ function addStudent(){
     if(!students[se][sp]) students[se][sp]=[];
     students[se][sp].push({id:sid,name:name,studName:studName,phone:phone,dob:dob,joinDate:join,fee:'unpaid',feeAmount:feeAmt,feeType:feeType,feeHistory:[]});
   }
-
   // Add to today's attHistory
   var dk=dateKey(selDate);
   var rec=attHistory.find(function(h){return h.date===dk&&h.session===se&&h.sport===sp;});
   if(rec){
-    // Record exists - just add new student if not already there
-    if(!rec.students.find(function(s){return s.id===sid;})){
+    if(!rec.students.find(function(s){return s.id===sid;}))
       rec.students.push({id:sid,studName:studName,present:true,comment:''});
-    }
   } else {
-    // No record for today - get latest students and add new student to them
     var latestRec=attHistory.filter(function(h){
       return h.session===se&&h.sport===sp&&h.date<dk;
     }).sort(function(a,b){return b.date.localeCompare(a.date);})[0];
     var baseStudents=latestRec?latestRec.students.map(function(s){
       return {id:s.id,studName:s.studName,present:true,comment:''};
     }):[];
-    if(!baseStudents.find(function(s){return s.id===sid;})){
+    if(!baseStudents.find(function(s){return s.id===sid;}))
       baseStudents.push({id:sid,studName:studName,present:true,comment:''});
-    }
     attHistory.push({date:dk,session:se,sport:sp,students:baseStudents});
   }
-
   workingState={};
   saveAll();
   closeModal();
@@ -1437,25 +1464,6 @@ window.generateReportCard=generateReportCard; window.closeReportCard=closeReport
 window.setBkMonth=setBkMonth;window.toggleBkExpand=toggleBkExpand;window.selectBkSport=selectBkSport;window.calcDuration=calcDuration;window.onBkPaymentChange=onBkPaymentChange;window.calcBalance=calcBalance;window.selectBkSport=selectBkSport;window.calcDuration=calcDuration;window.toggleBkExpand=toggleBkExpand;window.markBkPaid=markBkPaid;window.deleteBk=deleteBk;window.editBk=editBk;window.saveEditBk=saveEditBk;window.addBooking=addBooking;
 window.setInqFilter=setInqFilter; window.setInqStatus=setInqStatus; window.deleteInq=deleteInq;
 
-
-const POSITIONS={Football:['Goalkeeper','Defender','Midfielder','Forward','Winger'],Basketball:['Point Guard','Shooting Guard','Small Forward','Power Forward','Center'],Cricket:['Batsman','Bowler','All-Rounder','Wicket Keeper','Fielder']};
-function generateReportCard(){
-  var id=currentProfileId,sess=currentProfileSess,sp=currentProfileSport;
-  var list=(students[sess]&&students[sess][sp])||[];
-  var st=list.find(function(s){return s.id===id;});
-  if(!st){var dl=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];st=dl.find(function(s){return s.id===id;});}
-  if(!st){document.getElementById('reportCardContent').innerHTML='<div style="padding:2rem;text-align:center;color:#bbb;">No profile data.</div>';document.getElementById('reportCardView').style.display='block';return;}
-  var html='<div style="padding:16px;"><div style="font-size:20px;font-weight:700;margin-bottom:4px;">'+(st.studName||st.name||'')+'</div>';
-  html+='<div style="font-size:14px;color:#aaa;margin-bottom:16px;">'+sp+' · '+(sess==='morning'?'Morning':'Evening')+'</div>';
-  html+='<div style="background:#fff;border-radius:14px;padding:16px;">';
-  html+='<div style="font-size:13px;color:#555;margin-bottom:6px;">DOB: '+(st.dob||'—')+'</div>';
-  html+='<div style="font-size:13px;color:#555;margin-bottom:6px;">Phone: '+(st.phone||'—')+'</div>';
-  html+='<div style="font-size:13px;color:#555;">Fee: '+(st.fee||'—')+'</div>';
-  html+='</div></div>';
-  document.getElementById('reportCardContent').innerHTML=html;
-  document.getElementById('reportCardView').style.display='block';
-}
-window.generateReportCard=generateReportCard;
 </script>
 </body>
 </html>
