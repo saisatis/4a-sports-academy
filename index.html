@@ -798,25 +798,17 @@ function getStudentsForDate(){
       return {id:s.id,studName:s.studName||'',name:s.studName||'',phone:'',dob:'',present:s.present,comment:s.comment||''};
     });
   }
-  // No saved data for this date - use most recent saved record for same session/sport
-  var recent = attHistory.filter(function(h){
-    return h.session===session && h.sport===sport && h.date<=dk;
-  }).sort(function(a,b){return b.date.localeCompare(a.date);})[0];
-  if(recent && recent.students && recent.students.length>0){
-    // Return students marked present by default (fresh day)
-    return recent.students.map(function(s){
-      return {id:s.id,studName:s.studName||'',name:s.studName||'',phone:'',dob:'',present:true,comment:''};
-    });
-  }
-  // Final fallback - use PER_MONTH_STUDENTS
+  // No saved data - use latest month students
   var monthKey = dk.slice(0,7);
   var mData = PER_MONTH_STUDENTS[monthKey];
   if(!mData){
+    // Find latest available month
     var keys = Object.keys(PER_MONTH_STUDENTS).sort().reverse();
     mData = PER_MONTH_STUDENTS[keys[0]];
   }
   if(sport==='Basketball'){
-    return (mData&&mData[session+'_bball'])||[];
+    var bkey = session+'_bball';
+    return (mData&&mData[bkey])||[];
   }
   return (mData&&mData[session])||[];
 }
@@ -1230,20 +1222,63 @@ function openModal(type){
   }
 }
 function addStudent(){
-  const studName=document.getElementById('newStudName').value.trim();
-  const name=document.getElementById('newName').value.trim();
-  const phone=document.getElementById('newPhone').value.trim();
-  const dob=document.getElementById('newDob').value.trim();
-  const join=document.getElementById('newJoin').value.trim();
-  const sp=document.getElementById('newSport').value;
-  const se=document.getElementById('newSession').value;
-  const feeAmt=parseInt(document.getElementById('newFeeAmt').value)||2000;
-  const feeType=document.getElementById('newFeeType').value;
+  var studName=document.getElementById('newStudName').value.trim();
+  var name=document.getElementById('newName').value.trim();
+  var phone=document.getElementById('newPhone').value.trim();
+  var dob=document.getElementById('newDob').value.trim();
+  var join=document.getElementById('newJoin').value.trim();
+  var sp=document.getElementById('newSport').value;
+  var se=document.getElementById('newSession').value;
+  var feeAmt=parseInt(document.getElementById('newFeeAmt').value)||2000;
+  var feeType=document.getElementById('newFeeType').value;
   if(!studName){alert('Please enter student name.');return;}
-  if(!students[se][sp])students[se][sp]=[];
-  students[se][sp].push({id:nextId++,name,studName,phone,dob,joinDate:join,fee:'unpaid',feeAmount:feeAmt,feeType,feeHistory:[]});
-  saveAll();closeModal();
-  if(se===session&&sp===sport)renderStudents();
+
+  // Check if old or new student
+  var existSt=null;
+  var allSess=['morning','evening'];
+  var allSp=['Football','Basketball','Cricket'];
+  for(var i=0;i<allSess.length&&!existSt;i++){
+    for(var j=0;j<allSp.length&&!existSt;j++){
+      var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
+      existSt=l.find(function(s){return (s.studName||'').toLowerCase()===studName.toLowerCase();});
+    }
+  }
+
+  var sid;
+  if(existSt){
+    sid=existSt.id;
+  } else {
+    sid=nextId++;
+    if(!students[se][sp]) students[se][sp]=[];
+    students[se][sp].push({id:sid,name:name,studName:studName,phone:phone,dob:dob,joinDate:join,fee:'unpaid',feeAmount:feeAmt,feeType:feeType,feeHistory:[]});
+  }
+
+  // Add to today's attHistory
+  var dk=dateKey(selDate);
+  var rec=attHistory.find(function(h){return h.date===dk&&h.session===se&&h.sport===sp;});
+  if(rec){
+    // Record exists - just add new student if not already there
+    if(!rec.students.find(function(s){return s.id===sid;})){
+      rec.students.push({id:sid,studName:studName,present:true,comment:''});
+    }
+  } else {
+    // No record for today - get latest students and add new student to them
+    var latestRec=attHistory.filter(function(h){
+      return h.session===se&&h.sport===sp&&h.date<dk;
+    }).sort(function(a,b){return b.date.localeCompare(a.date);})[0];
+    var baseStudents=latestRec?latestRec.students.map(function(s){
+      return {id:s.id,studName:s.studName,present:true,comment:''};
+    }):[];
+    if(!baseStudents.find(function(s){return s.id===sid;})){
+      baseStudents.push({id:sid,studName:studName,present:true,comment:''});
+    }
+    attHistory.push({date:dk,session:se,sport:sp,students:baseStudents});
+  }
+
+  workingState={};
+  saveAll();
+  closeModal();
+  if(se===session&&sp===sport) renderStudents();
   renderProfiles();
 }
 function addInquiry(){
@@ -1385,7 +1420,7 @@ function saveEditFee(id,sess,sp){
 // Auto init
 loggedInUser = localStorage.getItem('aca_user')||'admin';
 document.addEventListener('DOMContentLoaded', function(){ initApp(); });
-window.saveAllSkills=saveAllSkills;window.generateReportCard=generateReportCard;window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
+window.saveAllSkills=saveAllSkills;window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
 window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.removeFromBatch=removeFromBatch;window.setActive=setActive;window.toggleAttExpand=toggleAttExpand;window.toggleInactiveView=toggleInactiveView;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;
 window.toggleExpand=toggleExpand; window.saveAttendance=saveAttendance;
@@ -1405,36 +1440,3 @@ window.setInqFilter=setInqFilter; window.setInqStatus=setInqStatus; window.delet
 </script>
 </body>
 </html>
-const POSITIONS={
-  Football:['Goalkeeper','Defender','Midfielder','Forward','Winger'],
-  Basketball:['Point Guard','Shooting Guard','Small Forward','Power Forward','Center'],
-  Cricket:['Batsman','Bowler','All-Rounder','Wicket Keeper','Fielder']
-};
-
-function generateReportCard(){
-  var id=currentProfileId,sess=currentProfileSess,sp=currentProfileSport;
-  var list=(students[sess]&&students[sess][sp])||[];
-  var st=list.find(function(s){return s.id===id;});
-  if(!st){
-    var dl=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];
-    st=dl.find(function(s){return s.id===id;});
-  }
-  if(!st){
-    document.getElementById('reportCardContent').innerHTML='<div style="padding:2rem;text-align:center;color:#bbb;">No profile data found.</div>';
-    document.getElementById('reportCardView').style.display='block';
-    return;
-  }
-  var html='<div style="padding:16px;">';
-  html+='<div style="font-size:20px;font-weight:700;margin-bottom:4px;">'+(st.studName||st.name||'')+'</div>';
-  html+='<div style="font-size:14px;color:#aaa;margin-bottom:16px;">'+sp+' · '+(sess==='morning'?'Morning':'Evening')+'</div>';
-  html+='<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;">';
-  html+='<div style="font-weight:700;margin-bottom:10px;font-size:15px;">Student Info</div>';
-  html+='<div style="font-size:13px;color:#555;margin-bottom:6px;">DOB: '+(st.dob||'—')+'</div>';
-  html+='<div style="font-size:13px;color:#555;margin-bottom:6px;">Phone: '+(st.phone||'—')+'</div>';
-  html+='<div style="font-size:13px;color:#555;margin-bottom:6px;">Fee Status: '+(st.fee||'—')+'</div>';
-  html+='<div style="font-size:13px;color:#555;">Join Date: '+(st.joinDate||'—')+'</div>';
-  html+='</div></div>';
-  document.getElementById('reportCardContent').innerHTML=html;
-  document.getElementById('reportCardView').style.display='block';
-}
-
