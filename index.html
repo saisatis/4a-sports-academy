@@ -1437,6 +1437,25 @@ window.generateReportCard=generateReportCard; window.closeReportCard=closeReport
 window.setBkMonth=setBkMonth;window.toggleBkExpand=toggleBkExpand;window.selectBkSport=selectBkSport;window.calcDuration=calcDuration;window.onBkPaymentChange=onBkPaymentChange;window.calcBalance=calcBalance;window.selectBkSport=selectBkSport;window.calcDuration=calcDuration;window.toggleBkExpand=toggleBkExpand;window.markBkPaid=markBkPaid;window.deleteBk=deleteBk;window.editBk=editBk;window.saveEditBk=saveEditBk;window.addBooking=addBooking;
 window.setInqFilter=setInqFilter; window.setInqStatus=setInqStatus; window.deleteInq=deleteInq;
 
+
+const POSITIONS={Football:['Goalkeeper','Defender','Midfielder','Forward','Winger'],Basketball:['Point Guard','Shooting Guard','Small Forward','Power Forward','Center'],Cricket:['Batsman','Bowler','All-Rounder','Wicket Keeper','Fielder']};
+function generateReportCard(){
+  var id=currentProfileId,sess=currentProfileSess,sp=currentProfileSport;
+  var list=(students[sess]&&students[sess][sp])||[];
+  var st=list.find(function(s){return s.id===id;});
+  if(!st){var dl=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];st=dl.find(function(s){return s.id===id;});}
+  if(!st){document.getElementById('reportCardContent').innerHTML='<div style="padding:2rem;text-align:center;color:#bbb;">No profile data.</div>';document.getElementById('reportCardView').style.display='block';return;}
+  var html='<div style="padding:16px;"><div style="font-size:20px;font-weight:700;margin-bottom:4px;">'+(st.studName||st.name||'')+'</div>';
+  html+='<div style="font-size:14px;color:#aaa;margin-bottom:16px;">'+sp+' · '+(sess==='morning'?'Morning':'Evening')+'</div>';
+  html+='<div style="background:#fff;border-radius:14px;padding:16px;">';
+  html+='<div style="font-size:13px;color:#555;margin-bottom:6px;">DOB: '+(st.dob||'—')+'</div>';
+  html+='<div style="font-size:13px;color:#555;margin-bottom:6px;">Phone: '+(st.phone||'—')+'</div>';
+  html+='<div style="font-size:13px;color:#555;">Fee: '+(st.fee||'—')+'</div>';
+  html+='</div></div>';
+  document.getElementById('reportCardContent').innerHTML=html;
+  document.getElementById('reportCardView').style.display='block';
+}
+window.generateReportCard=generateReportCard;
 </script>
 </body>
 </html>
