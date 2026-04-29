@@ -324,8 +324,7 @@ html{margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Sego
 <div id="reportCardView">
   <div id="reportCardContent"></div>
   <button class="rc-close-btn" onclick="closeReportCard()">Close Report Card</button>
-</div></body>
-</html>
+</div>
 
   <!-- DASHBOARD -->
   <div class="screen" id="screen-dashboard">
@@ -555,7 +554,27 @@ function fmtKey(k){return keyToDate(k).toLocaleDateString('en-IN',{weekday:'shor
 function fmtMoney(n){return '₹'+Number(n).toLocaleString('en-IN');}
 function calcAge(dob){if(!dob)return null;const p=dob.split('/');if(p.length!==3)return null;const d=new Date(+p[2],+p[1]-1,+p[0]);if(isNaN(d))return null;const t=new Date();let a=t.getFullYear()-d.getFullYear();const m=t.getMonth()-d.getMonth();if(m<0||(m===0&&t.getDate()<d.getDate()))a--;return a;}
 function calcCategory(dob){const a=calcAge(dob);if(a===null)return null;if(a<=8)return{label:'Under-8',short:'U8',color:'#2980b9',bg:'#e8f0fe'};if(a<=10)return{label:'Under-10',short:'U10',color:'#27ae60',bg:'#e8f5e9'};if(a<=12)return{label:'Under-12',short:'U12',color:'#e67e22',bg:'#fff3e0'};if(a<=14)return{label:'Under-14',short:'U14',color:'#e74c3c',bg:'#fdecea'};if(a<=16)return{label:'Under-16',short:'U16',color:'#8e44ad',bg:'#f3e8fd'};if(a<=18)return{label:'Under-18',short:'U18',color:'#00695c',bg:'#e0f2f1'};return{label:'Senior',short:'SR',color:'#555',bg:'#f4f4f2'};}
-function getAllStudents(){let all=[];Object.keys(BATCHES).forEach(sess=>Object.keys(students[sess]).forEach(sp=>{students[sess][sp].forEach(st=>all.push({...st,session:sess,sport:sp}));}));return all;}
+function getAllStudents(){
+  var all=[];
+  var allSess=['morning','evening'];
+  var allSp=['Football','Basketball','Cricket'];
+  var seen={};
+  allSess.forEach(function(sess){
+    allSp.forEach(function(sp){
+      // From students (runtime/Firebase)
+      var list=(students[sess]&&students[sess][sp])||[];
+      list.forEach(function(st){
+        if(!seen[st.id]){seen[st.id]=true;all.push(Object.assign({},st,{session:sess,sport:sp}));}
+      });
+      // From DEFAULT_STUDENTS
+      var dlist=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];
+      dlist.forEach(function(st){
+        if(!seen[st.id]){seen[st.id]=true;all.push(Object.assign({},st,{session:sess,sport:sp}));}
+      });
+    });
+  });
+  return all;
+}
 function getMonthKey(offset=0){const d=new Date();d.setMonth(d.getMonth()-offset);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function fmtMonthKey(key){const[y,m]=key.split('-');return new Date(+y,+m-1,1).toLocaleDateString('en-IN',{month:'short',year:'numeric'});}
 function ensurePerf(st){if(!st.perf)st.perf={position:'',level:'Beginner',dominant:'',coachNote:'',monthly:{}};return st.perf;}
@@ -1016,26 +1035,135 @@ function getLastComment(id){
   return '';
 }
 function toggleExpand(id){expandedId=expandedId===id?null:id;renderStudents();}
-function goToProfile(id,sess,sp){
-  // Try direct match first
-  if(students[sess]&&students[sess][sp]&&(students[sess][sp]||[]).find(function(s){return s.id===id;})){
-    openProfileDetail(id,sess,sp);
-    return;
-  }
-  // Search across all sessions and sports
+function findStudentById(id){
+  // Search students (localStorage)
   var sessions=['morning','evening'];
   var sports=['Football','Basketball','Cricket'];
   for(var i=0;i<sessions.length;i++){
     for(var j=0;j<sports.length;j++){
       var list=(students[sessions[i]]&&students[sessions[i]][sports[j]])||[];
-      if(list.find(function(s){return s.id===id;})){
-        openProfileDetail(id,sessions[i],sports[j]);
-        return;
+      var found=list.find(function(s){return s.id===id;});
+      if(found) return {st:found,sess:sessions[i],sp:sports[j]};
+    }
+  }
+  // Search DEFAULT_STUDENTS
+  for(var i=0;i<sessions.length;i++){
+    for(var j=0;j<sports.length;j++){
+      var dlist=(DEFAULT_STUDENTS[sessions[i]]&&DEFAULT_STUDENTS[sessions[i]][sports[j]])||[];
+      var found=dlist.find(function(s){return s.id===id;});
+      if(found) return {st:found,sess:sessions[i],sp:sports[j]};
+    }
+  }
+  // Search PER_MONTH_STUDENTS by name match - get current month's student name then find in DEFAULT
+  var allMonths=Object.keys(PER_MONTH_STUDENTS).sort().reverse();
+  for(var m=0;m<allMonths.length;m++){
+    var mData=PER_MONTH_STUDENTS[allMonths[m]];
+    var allKeys=Object.keys(mData||{});
+    for(var k=0;k<allKeys.length;k++){
+      var bucket=mData[allKeys[k]]||[];
+      var pmSt=bucket.find(function(s){return s.id===id;});
+      if(pmSt){
+        // Now find the real student in DEFAULT_STUDENTS by name
+        for(var i=0;i<sessions.length;i++){
+          for(var j=0;j<sports.length;j++){
+            var dl=(DEFAULT_STUDENTS[sessions[i]]&&DEFAULT_STUDENTS[sessions[i]][sports[j]])||[];
+            var realSt=dl.find(function(s){return (s.studName||'').toLowerCase()===(pmSt.studName||'').toLowerCase();});
+            if(realSt) return {st:realSt,sess:sessions[i],sp:sports[j]};
+          }
+        }
+        // Return the PER_MONTH student in morning football as default
+        return {st:pmSt,sess:'morning',sp:'Football'};
       }
     }
   }
-  // Not in profiles yet - show alert
-  alert('Profile not found. Please add this student to Profiles first.');
+  return null;
+}
+function goToProfile(id,sess,sp){
+  var result=findStudentById(id);
+  showScreen('profiles');
+  if(result){
+    openProfileDetail(result.st.id,result.sess,result.sp);
+  } else {
+    openProfileDetail(id,sess,sp);
+  }
+}
+function openEditProfile(id,sess,sp){
+  // Find the student (may be in DEFAULT_STUDENTS)
+  var st=null;
+  var allSess=['morning','evening'],allSp=['Football','Basketball','Cricket'];
+  for(var i=0;i<allSess.length&&!st;i++){
+    for(var j=0;j<allSp.length&&!st;j++){
+      var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
+      st=l.find(function(s){return s.id===id;})||null;
+      if(st){sess=allSess[i];sp=allSp[j];}
+    }
+  }
+  if(!st){
+    for(var i=0;i<allSess.length&&!st;i++){
+      for(var j=0;j<allSp.length&&!st;j++){
+        var dl=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]])||[];
+        var def=dl.find(function(s){return s.id===id;});
+        if(def){
+          // Copy into editable students store so edits persist
+          if(!students[allSess[i]]) students[allSess[i]]={};
+          if(!students[allSess[i]][allSp[j]]) students[allSess[i]][allSp[j]]=[];
+          students[allSess[i]][allSp[j]].push(JSON.parse(JSON.stringify(def)));
+          st=students[allSess[i]][allSp[j]].find(function(s){return s.id===id;});
+          sess=allSess[i];sp=allSp[j];
+        }
+      }
+    }
+  }
+  if(!st){alert('Student not found.');return;}
+  currentProfileSess=sess;currentProfileSport=sp;
+  var allSports=['Football','Basketball','Cricket'];
+  showModal(`<div class="modal-handle"></div><div class="modal-title">Edit Profile</div>
+    <div class="field-label">Student Name</div><input type="text" id="epStudName" value="${st.studName||''}"/>
+    <div class="field-label">Parent Name</div><input type="text" id="epName" value="${st.name||''}"/>
+    <div class="field-label">Phone</div><input type="tel" id="epPhone" value="${st.phone||''}"/>
+    <div class="field-label">Date of Birth (DD/MM/YYYY)</div><input type="text" id="epDob" value="${st.dob||''}" placeholder="e.g. 14/02/2018"/>
+    <div class="field-label">Sport</div><select id="epSport">${allSports.map(s=>`<option value="${s}"${sp===s?' selected':''}>${s}</option>`).join('')}</select>
+    <div class="field-label">Session</div><select id="epSession"><option value="morning"${sess==='morning'?' selected':''}>Morning</option><option value="evening"${sess==='evening'?' selected':''}>Evening</option></select>
+    <div class="field-label">Join Date</div><input type="text" id="epJoin" value="${st.joinDate||''}" placeholder="e.g. 01/06/2025"/>
+    <div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="saveEditProfile(${id},'${sess}','${sp}')">Save</button></div>`);
+}
+function saveEditProfile(id,oldSess,oldSp){
+  var newStudName=document.getElementById('epStudName').value.trim();
+  var newName=document.getElementById('epName').value.trim();
+  var newPhone=document.getElementById('epPhone').value.trim();
+  var newDob=document.getElementById('epDob').value.trim();
+  var newSp=document.getElementById('epSport').value;
+  var newSess=document.getElementById('epSession').value;
+  var newJoin=document.getElementById('epJoin').value.trim();
+  if(!newStudName){alert('Student name is required.');return;}
+  // Find student in students store
+  var st=null;
+  var allSess=['morning','evening'],allSp=['Football','Basketball','Cricket'];
+  for(var i=0;i<allSess.length&&!st;i++){
+    for(var j=0;j<allSp.length&&!st;j++){
+      var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
+      st=l.find(function(s){return s.id===id;})||null;
+    }
+  }
+  if(!st){alert('Cannot save: student not found.');return;}
+  // Update fields
+  st.studName=newStudName;st.name=newName;st.phone=newPhone;st.dob=newDob;st.joinDate=newJoin;
+  // Handle sport/session change
+  if(newSp!==oldSp||newSess!==oldSess){
+    // Remove from old
+    if(students[oldSess]&&students[oldSess][oldSp]){
+      students[oldSess][oldSp]=students[oldSess][oldSp].filter(function(s){return s.id!==id;});
+    }
+    // Add to new
+    if(!students[newSess]) students[newSess]={};
+    if(!students[newSess][newSp]) students[newSess][newSp]=[];
+    if(!students[newSess][newSp].find(function(s){return s.id===id;})){
+      students[newSess][newSp].push(st);
+    }
+  }
+  saveAll();closeModal();
+  renderProfiles();
+  openProfileDetail(id,newSess,newSp);
 }
 function saveAttendance(){
   const ws=getWS();const dk=dateKey(selDate);
@@ -1080,7 +1208,7 @@ function renderProfiles(){
 }
 
 function openProfileDetail(id,sess,sp){
-  currentProfileId=id;currentProfileSess=sess;currentProfileSport=sp;profileViewTab='info';selectedMonth=getMonthKey(0);
+  currentProfileId=+id;currentProfileSess=sess;currentProfileSport=sp;profileViewTab='info';selectedMonth=getMonthKey(0);
   renderProfileDetailFull();document.getElementById('profileDetail').style.display='block';
 }
 function closeProfileDetail(){document.getElementById('profileDetail').style.display='none';}
@@ -1088,8 +1216,20 @@ function switchProfileTab(tab){profileViewTab=tab;if(tab==='report'){generateRep
 function selectMonth(m){selectedMonth=m;renderProfileDetailFull();}
 
 function renderProfileDetailFull(){
-  const id=currentProfileId,sess=currentProfileSess,sp=currentProfileSport;
-  const st=(students[sess][sp]||[]).find(s=>s.id===id); if(!st)return;
+  const id=+currentProfileId;
+  var sess=currentProfileSess,sp=currentProfileSport;
+  var st=null;
+  var allSess=['morning','evening'];
+  var allSp=['Football','Basketball','Cricket'];
+  for(var i=0;i<allSess.length&&!st;i++){
+    for(var j=0;j<allSp.length&&!st;j++){
+      var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
+      st=l.find(function(s){return s.id===id;});
+      if(!st){var dl=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]])||[];st=dl.find(function(s){return s.id===id;});}
+      if(st){sess=allSess[i];sp=allSp[j];}
+    }
+  }
+  if(!st){console.warn('Student not found:',id);return;}
   const perf=ensurePerf(st); const cat=calcCategory(st.dob); const age=calcAge(st.dob);
   const tabs=[{k:'info',l:'Info'},{k:'skills',l:'Skills'},{k:'progress',l:'Progress'},{k:'report',l:'Report Card'}];
   const tabHTML=`<div class="profile-tab-row">${tabs.map(t=>`<div class="ptab${profileViewTab===t.k?' active':''}" onclick="switchProfileTab('${t.k}')">${t.l}</div>`).join('')}</div>`;
@@ -1422,13 +1562,35 @@ function recordFeePayment(id,sess,sp){
   const type=document.getElementById('feeTypeRec').value;
   const date=document.getElementById('feeDate').value;
   if(!amt){alert('Please enter amount.');return;}
-  const st=(students[sess][sp]||[]).find(s=>s.id===id); if(!st)return;
+  var st=(students[sess]&&students[sess][sp]||[]).find(function(s){return s.id===id;});
+  if(!st){var dl=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];st=dl.find(function(s){return s.id===id;});}
+  if(!st){
+    // Search all sessions and sports
+    var allSess=['morning','evening'];var allSp=['Football','Basketball','Cricket'];
+    for(var i=0;i<allSess.length&&!st;i++){for(var j=0;j<allSp.length&&!st;j++){
+      st=(students[allSess[i]]&&students[allSess[i]][allSp[j]]||[]).find(function(s){return s.id===id;});
+      if(!st) st=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]]||[]).find(function(s){return s.id===id;});
+      if(st){sess=allSess[i];sp=allSp[j];}
+    }}
+  }
+  if(!st)return;
   if(!st.feeHistory)st.feeHistory=[];
   st.feeHistory.unshift({amount:amt,mode,type,date:fmtKey(date)});
   st.fee='paid'; saveAll(); closeModal(); openProfileDetail(id,sess,sp); renderProfiles();
 }
 function openEditFee(id,sess,sp){
-  const st=(students[sess][sp]||[]).find(s=>s.id===id); if(!st)return;
+  var st=(students[sess]&&students[sess][sp]||[]).find(function(s){return s.id===id;});
+  if(!st){var dl=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];st=dl.find(function(s){return s.id===id;});}
+  if(!st){
+    // Search all sessions and sports
+    var allSess=['morning','evening'];var allSp=['Football','Basketball','Cricket'];
+    for(var i=0;i<allSess.length&&!st;i++){for(var j=0;j<allSp.length&&!st;j++){
+      st=(students[allSess[i]]&&students[allSess[i]][allSp[j]]||[]).find(function(s){return s.id===id;});
+      if(!st) st=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]]||[]).find(function(s){return s.id===id;});
+      if(st){sess=allSess[i];sp=allSp[j];}
+    }}
+  }
+  if(!st)return;
   showModal(`<div class="modal-handle"></div><div class="modal-title">Edit Fee Details</div>
     <div class="field-label">Fee Amount (₹)</div><input type="number" id="editFeeAmt" value="${st.feeAmount}"/>
     <div class="field-label">Fee Type</div><select id="editFeeType"><option value="monthly"${st.feeType==='monthly'?' selected':''}>Monthly</option><option value="yearly"${st.feeType==='yearly'?' selected':''}>Yearly</option><option value="onetime"${st.feeType==='onetime'?' selected':''}>One-time</option></select>
@@ -1436,7 +1598,18 @@ function openEditFee(id,sess,sp){
     <div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="saveEditFee(${id},'${sess}','${sp}')">Save</button></div>`);
 }
 function saveEditFee(id,sess,sp){
-  const st=(students[sess][sp]||[]).find(s=>s.id===id); if(!st)return;
+  var st=(students[sess]&&students[sess][sp]||[]).find(function(s){return s.id===id;});
+  if(!st){var dl=(DEFAULT_STUDENTS[sess]&&DEFAULT_STUDENTS[sess][sp])||[];st=dl.find(function(s){return s.id===id;});}
+  if(!st){
+    // Search all sessions and sports
+    var allSess=['morning','evening'];var allSp=['Football','Basketball','Cricket'];
+    for(var i=0;i<allSess.length&&!st;i++){for(var j=0;j<allSp.length&&!st;j++){
+      st=(students[allSess[i]]&&students[allSess[i]][allSp[j]]||[]).find(function(s){return s.id===id;});
+      if(!st) st=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]]||[]).find(function(s){return s.id===id;});
+      if(st){sess=allSess[i];sp=allSp[j];}
+    }}
+  }
+  if(!st)return;
   st.feeAmount=parseInt(document.getElementById('editFeeAmt').value)||st.feeAmount;
   st.feeType=document.getElementById('editFeeType').value;
   st.fee=document.getElementById('editFeeStatus').value;
