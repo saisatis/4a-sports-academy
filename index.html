@@ -1157,7 +1157,7 @@ function renderProfileDetailFull(){
     </div>`;
   }
   document.getElementById('profileDetailContent').innerHTML=`
-    <div class="detail-header"><button class="back-btn" onclick="closeProfileDetail()">&#8249;</button><div style="font-size:16px;font-weight:600;">${st.studName||'Student Profile'}</div></div>
+    <div class="detail-header"><button class="back-btn" onclick="closeProfileDetail()">&#8249;</button><div style="font-size:16px;font-weight:600;">${st.studName||'Student Profile'}</div><button onclick="openEditProfile(${id},'${sess}','${sp}')" style="padding:6px 14px;background:#111;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Edit</button></div>
     ${tabHTML}${bodyHTML}`;
   document.getElementById('profileDetail').style.display='block';
 }
@@ -1447,7 +1447,7 @@ function saveEditFee(id,sess,sp){
 // Auto init
 loggedInUser = localStorage.getItem('aca_user')||'admin';
 document.addEventListener('DOMContentLoaded', function(){ initApp(); });
-window.saveAllSkills=saveAllSkills;window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
+window.saveAllSkills=saveAllSkills;window.openEditProfile=openEditProfile;window.saveEditProfile=saveEditProfile;window.doLogin=doLogin; window.doLogout=doLogout; window.showScreen=showScreen;
 window.switchSession=switchSession; window.selectSport=selectSport;
 window.changeDate=changeDate; window.togglePresent=togglePresent;window.getStudentsForDate=getStudentsForDate;window.setComment=setComment;window.removeFromBatch=removeFromBatch;window.setActive=setActive;window.toggleAttExpand=toggleAttExpand;window.toggleInactiveView=toggleInactiveView;window.doneComment=doneComment;window.showDoneBtn=showDoneBtn;window.goToProfile=goToProfile;
 window.toggleExpand=toggleExpand; window.saveAttendance=saveAttendance;
