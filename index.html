@@ -838,16 +838,17 @@ function getStudentsForDate(){
   return (mData&&mData[session])||[];
 }
 
-function getStudentPhone(id){
+function getStudentPhone(id,name){
   var allSess=['morning','evening'];
   var allSp=['Football','Basketball','Cricket'];
+  var nameLower=(name||'').toLowerCase().trim();
   for(var i=0;i<allSess.length;i++){
     for(var j=0;j<allSp.length;j++){
       var l=(students[allSess[i]]&&students[allSess[i]][allSp[j]])||[];
-      var f=l.find(function(s){return s.id===id;});
+      var f=l.find(function(s){return s.id===id||(nameLower&&(s.studName||s.name||'').toLowerCase().trim()===nameLower);});
       if(f&&f.phone) return f.phone;
       var dl=(DEFAULT_STUDENTS[allSess[i]]&&DEFAULT_STUDENTS[allSess[i]][allSp[j]])||[];
-      var df=dl.find(function(s){return s.id===id;});
+      var df=dl.find(function(s){return s.id===id||(nameLower&&(s.studName||s.name||'').toLowerCase().trim()===nameLower);});
       if(df&&df.phone) return df.phone;
     }
   }
@@ -858,7 +859,7 @@ function getWS(){
   if(!workingState[k]){
     var monthList=getStudentsForDate();
     workingState[k]=monthList.map(function(st){
-      var phone=st.phone||getStudentPhone(st.id)||'';
+      var phone=st.phone||getStudentPhone(st.id,st.studName||st.name)||'';
       return {
         id:st.id,
         studName:st.studName||st.name||'',
