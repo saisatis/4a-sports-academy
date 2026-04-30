@@ -1079,13 +1079,41 @@ function findStudentById(id){
   return null;
 }
 function goToProfile(id,sess,sp){
-  var result=findStudentById(id);
-  showScreen('profiles');
-  if(result){
-    openProfileDetail(result.st.id,result.sess,result.sp);
-  } else {
-    openProfileDetail(id,sess,sp);
+  // Get the student name from attendance working state
+  var ws=getWS();
+  var attSt=ws.find(function(s){return s.id===+id;});
+  var name=attSt?(attSt.studName||attSt.name||''):'';
+
+  // Search by name in students + DEFAULT_STUDENTS
+  var sessions=['morning','evening'];
+  var sports=['Football','Basketball','Cricket'];
+  if(name){
+    for(var i=0;i<sessions.length;i++){
+      for(var j=0;j<sports.length;j++){
+        var l=(students[sessions[i]]&&students[sessions[i]][sports[j]])||[];
+        var found=l.find(function(s){return (s.studName||s.name||'').toLowerCase()===name.toLowerCase();});
+        if(found){showScreen('profiles');openProfileDetail(found.id,sessions[i],sports[j]);return;}
+        var dl=(DEFAULT_STUDENTS[sessions[i]]&&DEFAULT_STUDENTS[sessions[i]][sports[j]])||[];
+        found=dl.find(function(s){return (s.studName||s.name||'').toLowerCase()===name.toLowerCase();});
+        if(found){showScreen('profiles');openProfileDetail(found.id,sessions[i],sports[j]);return;}
+      }
+    }
   }
+
+  // Fallback: try by id directly
+  for(var i=0;i<sessions.length;i++){
+    for(var j=0;j<sports.length;j++){
+      var l=(students[sessions[i]]&&students[sessions[i]][sports[j]])||[];
+      var found=l.find(function(s){return s.id===+id;});
+      if(found){showScreen('profiles');openProfileDetail(found.id,sessions[i],sports[j]);return;}
+      var dl=(DEFAULT_STUDENTS[sessions[i]]&&DEFAULT_STUDENTS[sessions[i]][sports[j]])||[];
+      found=dl.find(function(s){return s.id===+id;});
+      if(found){showScreen('profiles');openProfileDetail(found.id,sessions[i],sports[j]);return;}
+    }
+  }
+
+  showScreen('profiles');
+  openProfileDetail(+id,sess,sp);
 }
 function openEditProfile(id,sess,sp){
   // Find the student (may be in DEFAULT_STUDENTS)
@@ -1206,6 +1234,11 @@ function renderProfiles(){
     </div>`;
   }).join(''):'<div style="text-align:center;padding:2rem;color:#bbb;font-size:14px;">No students found.</div>';
 }
+
+const POSITIONS={Football:['Goalkeeper','Defender','Midfielder','Forward','Winger'],Basketball:['Point Guard','Shooting Guard','Small Forward','Power Forward','Center'],Cricket:['Batsman','Bowler','All-rounder','Wicket-keeper']};
+const LEVELS=['Beginner','Intermediate','Advanced','Elite'];
+const DOMINANT={Football:['Right Foot','Left Foot','Both'],Basketball:['Right Hand','Left Hand','Both'],Cricket:['Right Hand','Left Hand']};
+const SPORT_SKILLS={Football:['Dribbling','Passing','Shooting','Defending','Fitness'],Basketball:['Dribbling','Passing','Shooting','Defense','Fitness'],Cricket:['Batting','Bowling','Fielding','Fitness']};
 
 function openProfileDetail(id,sess,sp){
   currentProfileId=+id;currentProfileSess=sess;currentProfileSport=sp;profileViewTab='info';selectedMonth=getMonthKey(0);
